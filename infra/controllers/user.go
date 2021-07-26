@@ -21,7 +21,7 @@ func (controller *UserController) Create(ctx *fiber.Ctx) error {
 
 	err := ctx.BodyParser(&user)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
 	user, err = controller.userService.Create(user)
