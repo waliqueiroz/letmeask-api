@@ -6,5 +6,9 @@ import (
 )
 
 func SetupUserRoutes(router fiber.Router, userController *controllers.UserController) {
+	router.Get("/users", userController.Index)
+	router.Get("/users/:userID", userController.FindByID)
 	router.Post("/users", userController.Create)
+	router.Put("/users/:userID", userController.Update)
+	router.Delete("/users/:userID", userController.Delete)
 }

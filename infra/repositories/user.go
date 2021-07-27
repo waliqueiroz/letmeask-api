@@ -58,10 +58,10 @@ func (repository *UserRepository) Create(user entities.User) (entities.User, err
 		return entities.User{}, err
 	}
 
-	return repository.FindById(user.ID)
+	return repository.FindByID(user.ID)
 }
 
-func (repository *UserRepository) FindById(userID string) (entities.User, error) {
+func (repository *UserRepository) FindByID(userID string) (entities.User, error) {
 	ctx := context.TODO()
 	filter := bson.M{"_id": userID}
 
@@ -75,4 +75,38 @@ func (repository *UserRepository) FindById(userID string) (entities.User, error)
 	}
 
 	return user, nil
+}
+
+func (repository *UserRepository) Delete(userID string) error {
+	ctx := context.TODO()
+	filter := bson.M{"_id": userID}
+
+	_, err := repository.userCollection.DeleteOne(ctx, filter)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repository *UserRepository) Update(userID string, user entities.User) (entities.User, error) {
+	ctx := context.TODO()
+	filter := bson.M{"_id": userID}
+
+	update := bson.M{
+		"$set": bson.M{
+			"name":       user.Name,
+			"email":      user.Email,
+			"updated_at": time.Now(),
+		},
+	}
+
+	_, err := repository.userCollection.UpdateOne(ctx, filter, update)
+
+	if err != nil {
+		return entities.User{}, err
+	}
+
+	return repository.FindByID(userID)
 }
