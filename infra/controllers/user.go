@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/waliqueiroz/letmeask-api/application/dtos"
 	"github.com/waliqueiroz/letmeask-api/application/services"
 	"github.com/waliqueiroz/letmeask-api/domain/entities"
 )
@@ -75,6 +76,23 @@ func (controller *UserController) Delete(ctx *fiber.Ctx) error {
 
 	err := controller.userService.Delete(userID)
 	if err != nil {
+		return err
+	}
+
+	return ctx.SendStatus(fiber.StatusOK)
+}
+
+func (controller *UserController) UpdatePassword(ctx *fiber.Ctx) error {
+	var password dtos.PasswordDTO
+
+	err := ctx.BodyParser(&password)
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	userID := ctx.Params("userID")
+
+	if err := controller.userService.UpdatePassword(userID, password); err != nil {
 		return err
 	}
 

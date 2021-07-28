@@ -8,4 +8,5 @@ type UserRepository interface {
 	FindByID(userID string) (entities.User, error)
 	Update(userID string, user entities.User) (entities.User, error)
 	Delete(userID string) error
+	UpdatePassword(userID string, password string) error
 }

@@ -110,3 +110,23 @@ func (repository *UserRepository) Update(userID string, user entities.User) (ent
 
 	return repository.FindByID(userID)
 }
+
+func (repository *UserRepository) UpdatePassword(userID string, password string) error {
+	ctx := context.TODO()
+	filter := bson.M{"_id": userID}
+
+	update := bson.M{
+		"$set": bson.M{
+			"password":   password,
+			"updated_at": time.Now(),
+		},
+	}
+
+	_, err := repository.userCollection.UpdateOne(ctx, filter, update)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

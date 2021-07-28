@@ -11,4 +11,5 @@ func SetupUserRoutes(router fiber.Router, userController *controllers.UserContro
 	router.Post("/users", userController.Create)
 	router.Put("/users/:userID", userController.Update)
 	router.Delete("/users/:userID", userController.Delete)
+	router.Post("/users/:userID/update-password", userController.UpdatePassword)
 }
