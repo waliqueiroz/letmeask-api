@@ -5,7 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/waliqueiroz/letmeask-api/application/services"
-	"github.com/waliqueiroz/letmeask-api/infra/configuration"
+	"github.com/waliqueiroz/letmeask-api/infra/configurations"
 	"github.com/waliqueiroz/letmeask-api/infra/controllers"
 	"github.com/waliqueiroz/letmeask-api/infra/database"
 	"github.com/waliqueiroz/letmeask-api/infra/repositories"
@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	configuration := configuration.Load()
+	configuration := configurations.Load()
 
 	db, err := database.ConnectMongoDB(configuration)
 	if err != nil {

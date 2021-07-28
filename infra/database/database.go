@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/waliqueiroz/letmeask-api/infra/configuration"
+	"github.com/waliqueiroz/letmeask-api/infra/configurations"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func ConnectMongoDB(configuration configuration.Configuration) (*mongo.Database, error) {
+func ConnectMongoDB(configuration configurations.Configuration) (*mongo.Database, error) {
 	ctx := context.Background()
 
 	clientOptions := options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s/", configuration.Database.DBHost, configuration.Database.DBPort))

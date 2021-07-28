@@ -1,4 +1,4 @@
-package configuration
+package configurations
 
 type Database struct {
 	DBHost     string
