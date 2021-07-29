@@ -9,4 +9,5 @@ type UserRepository interface {
 	Update(userID string, user entities.User) (entities.User, error)
 	Delete(userID string) error
 	UpdatePassword(userID string, password string) error
+	FindByEmail(email string) (entities.User, error)
 }

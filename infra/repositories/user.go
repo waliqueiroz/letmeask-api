@@ -130,3 +130,19 @@ func (repository *UserRepository) UpdatePassword(userID string, password string)
 
 	return nil
 }
+
+func (repository *UserRepository) FindByEmail(email string) (entities.User, error) {
+	ctx := context.TODO()
+	filter := bson.M{"email": email}
+
+	result := repository.userCollection.FindOne(ctx, filter)
+
+	var user entities.User
+
+	err := result.Decode(&user)
+	if err != nil {
+		return entities.User{}, err
+	}
+
+	return user, nil
+}

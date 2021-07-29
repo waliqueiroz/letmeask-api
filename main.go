@@ -24,11 +24,15 @@ func main() {
 	userService := services.NewUserService(userRepository)
 	userController := controllers.NewUserController(userService)
 
+	authService := services.NewAuthService(userRepository)
+	authController := controllers.NewAuthController(authService)
+
 	app := fiber.New()
 
 	api := app.Group("/api")
 
 	routes.SetupUserRoutes(api, userController)
+	routes.SetupAuthRoutes(api, authController)
 
 	app.Listen(":8080")
 }
