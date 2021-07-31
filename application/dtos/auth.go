@@ -2,7 +2,7 @@ package dtos
 
 import "github.com/waliqueiroz/letmeask-api/domain/entities"
 
-type AuthResponseDTO struct {
+type AuthDTO struct {
 	User        entities.User `json:"user"`
 	AccessToken string        `json:"access_token"`
 	TokenType   string        `json:"token_type"`
