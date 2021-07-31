@@ -1,8 +1,14 @@
-package auth
+package providers
 
 import "github.com/golang-jwt/jwt"
 
-func CreateToken(userID string, expiresIn int64) (string, error) {
+type AuthProvider struct{}
+
+func NewAuthProvider() *AuthProvider {
+	return &AuthProvider{}
+}
+
+func (provider *AuthProvider) CreateToken(userID string, expiresIn int64) (string, error) {
 	permissions := jwt.MapClaims{}
 	permissions["authorized"] = true
 	permissions["exp"] = expiresIn

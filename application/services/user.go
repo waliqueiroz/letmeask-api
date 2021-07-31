@@ -4,18 +4,20 @@ import (
 	"errors"
 
 	"github.com/waliqueiroz/letmeask-api/application/dtos"
-	"github.com/waliqueiroz/letmeask-api/application/security"
+	"github.com/waliqueiroz/letmeask-api/application/providers"
 	"github.com/waliqueiroz/letmeask-api/domain/entities"
 	"github.com/waliqueiroz/letmeask-api/domain/repositories"
 )
 
 type UserService struct {
-	userRepository repositories.UserRepository
+	userRepository   repositories.UserRepository
+	securityProvider providers.SecurityProvider
 }
 
-func NewUserService(userRepository repositories.UserRepository) *UserService {
+func NewUserService(userRepository repositories.UserRepository, securityProvider providers.SecurityProvider) *UserService {
 	return &UserService{
 		userRepository,
+		securityProvider,
 	}
 }
 
@@ -24,7 +26,7 @@ func (service *UserService) FindAll() ([]entities.User, error) {
 }
 
 func (service *UserService) Create(user entities.User) (entities.User, error) {
-	hashedPassword, err := security.Hash(user.Password)
+	hashedPassword, err := service.securityProvider.Hash(user.Password)
 	if err != nil {
 		return entities.User{}, err
 	}
@@ -52,11 +54,11 @@ func (service *UserService) UpdatePassword(userID string, password dtos.Password
 		return err
 	}
 
-	if err := security.Verify(user.Password, password.Current); err != nil {
+	if err := service.securityProvider.Verify(user.Password, password.Current); err != nil {
 		return errors.New("a operação falhou. Revise os dados e tente novamente")
 	}
 
-	hashedPassword, err := security.Hash(password.New)
+	hashedPassword, err := service.securityProvider.Hash(password.New)
 	if err != nil {
 		return err
 	}
