@@ -9,6 +9,7 @@ import (
 
 type Configuration struct {
 	Database Database
+	Auth     Auth
 }
 
 func Load() Configuration {
@@ -21,6 +22,9 @@ func Load() Configuration {
 			DBHost:     os.Getenv("DB_HOST"),
 			DBPort:     os.Getenv("DB_PORT"),
 			DBDatabase: os.Getenv("DB_DATABASE"),
+		},
+		Auth: Auth{
+			SecretKey: os.Getenv("SECRET_KEY"),
 		},
 	}
 

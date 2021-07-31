@@ -1,11 +1,18 @@
 package providers
 
-import "github.com/golang-jwt/jwt"
+import (
+	"github.com/golang-jwt/jwt"
+	"github.com/waliqueiroz/letmeask-api/infra/configurations"
+)
 
-type AuthProvider struct{}
+type AuthProvider struct {
+	configuration configurations.Configuration
+}
 
-func NewAuthProvider() *AuthProvider {
-	return &AuthProvider{}
+func NewAuthProvider(configuration configurations.Configuration) *AuthProvider {
+	return &AuthProvider{
+		configuration,
+	}
 }
 
 func (provider *AuthProvider) CreateToken(userID string, expiresIn int64) (string, error) {
@@ -16,5 +23,5 @@ func (provider *AuthProvider) CreateToken(userID string, expiresIn int64) (strin
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, permissions)
 
-	return token.SignedString([]byte("secret"))
+	return token.SignedString([]byte(provider.configuration.Auth.SecretKey))
 }
