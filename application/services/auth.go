@@ -3,7 +3,7 @@ package services
 import (
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/waliqueiroz/letmeask-api/application/auth"
 	"github.com/waliqueiroz/letmeask-api/application/dtos"
 	"github.com/waliqueiroz/letmeask-api/application/security"
 	"github.com/waliqueiroz/letmeask-api/domain/repositories"
@@ -31,7 +31,7 @@ func (service *AuthService) Login(credentials dtos.CredentialsDTO) (dtos.AuthDTO
 
 	expiresIn := time.Now().Add(time.Hour * 6).Unix()
 
-	token, err := service.createToken(user.ID, expiresIn)
+	token, err := auth.CreateToken(user.ID, expiresIn)
 	if err != nil {
 		return dtos.AuthDTO{}, err
 	}
@@ -42,15 +42,4 @@ func (service *AuthService) Login(credentials dtos.CredentialsDTO) (dtos.AuthDTO
 		TokenType:   "Bearer",
 		ExpiresIn:   expiresIn,
 	}, nil
-}
-
-func (service *AuthService) createToken(userID string, expiresIn int64) (string, error) {
-	permissions := jwt.MapClaims{}
-	permissions["authorized"] = true
-	permissions["exp"] = expiresIn
-	permissions["userID"] = userID
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, permissions)
-
-	return token.SignedString([]byte("secret"))
 }
