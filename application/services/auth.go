@@ -8,21 +8,25 @@ import (
 	"github.com/waliqueiroz/letmeask-api/domain/repositories"
 )
 
-type AuthService struct {
+type AuthService interface {
+	Login(credentials dtos.CredentialsDTO) (dtos.AuthDTO, error)
+}
+
+type authService struct {
 	userRepository   repositories.UserRepository
 	securityProvider providers.SecurityProvider
 	authProvider     providers.AuthProvider
 }
 
-func NewAuthService(userRepository repositories.UserRepository, securityProvider providers.SecurityProvider, authProvider providers.AuthProvider) *AuthService {
-	return &AuthService{
+func NewAuthService(userRepository repositories.UserRepository, securityProvider providers.SecurityProvider, authProvider providers.AuthProvider) *authService {
+	return &authService{
 		userRepository,
 		securityProvider,
 		authProvider,
 	}
 }
 
-func (service *AuthService) Login(credentials dtos.CredentialsDTO) (dtos.AuthDTO, error) {
+func (service *authService) Login(credentials dtos.CredentialsDTO) (dtos.AuthDTO, error) {
 	user, err := service.userRepository.FindByEmail(credentials.Email)
 	if err != nil {
 		return dtos.AuthDTO{}, err
