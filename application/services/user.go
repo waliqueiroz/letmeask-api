@@ -1,9 +1,8 @@
 package services
 
 import (
-	"errors"
-
 	"github.com/waliqueiroz/letmeask-api/application/dtos"
+	"github.com/waliqueiroz/letmeask-api/application/errors"
 	"github.com/waliqueiroz/letmeask-api/application/providers"
 	"github.com/waliqueiroz/letmeask-api/domain/entities"
 	"github.com/waliqueiroz/letmeask-api/domain/repositories"
@@ -64,7 +63,7 @@ func (service *userService) UpdatePassword(userID string, password dtos.Password
 	}
 
 	if err := service.securityProvider.Verify(user.Password, password.Current); err != nil {
-		return errors.New("a operação falhou. Revise os dados e tente novamente")
+		return errors.NewUnauthorizedError("a operação falhou, revise os dados e tente novamente")
 	}
 
 	hashedPassword, err := service.securityProvider.Hash(password.New)

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/waliqueiroz/letmeask-api/application/dtos"
+	"github.com/waliqueiroz/letmeask-api/application/errors"
 	"github.com/waliqueiroz/letmeask-api/application/providers"
 	"github.com/waliqueiroz/letmeask-api/domain/repositories"
 )
@@ -29,11 +30,11 @@ func NewAuthService(userRepository repositories.UserRepository, securityProvider
 func (service *authService) Login(credentials dtos.CredentialsDTO) (dtos.AuthDTO, error) {
 	user, err := service.userRepository.FindByEmail(credentials.Email)
 	if err != nil {
-		return dtos.AuthDTO{}, err
+		return dtos.AuthDTO{}, errors.NewUnauthorizedError("credenciais inválidas")
 	}
 
 	if err := service.securityProvider.Verify(user.Password, credentials.Password); err != nil {
-		return dtos.AuthDTO{}, err
+		return dtos.AuthDTO{}, errors.NewUnauthorizedError("credenciais inválidas")
 	}
 
 	expiresIn := time.Now().Add(time.Hour * 6).Unix()

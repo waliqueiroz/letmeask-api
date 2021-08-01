@@ -8,6 +8,7 @@ import (
 	"github.com/waliqueiroz/letmeask-api/infra/configurations"
 	"github.com/waliqueiroz/letmeask-api/infra/controllers"
 	"github.com/waliqueiroz/letmeask-api/infra/database"
+	"github.com/waliqueiroz/letmeask-api/infra/errors"
 	"github.com/waliqueiroz/letmeask-api/infra/middlewares"
 	"github.com/waliqueiroz/letmeask-api/infra/providers"
 	"github.com/waliqueiroz/letmeask-api/infra/repositories"
@@ -34,7 +35,9 @@ func main() {
 
 	authMiddleware := middlewares.NewAuthMiddleware(configuration)
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		ErrorHandler: errors.Handler,
+	})
 
 	api := app.Group("/api")
 
