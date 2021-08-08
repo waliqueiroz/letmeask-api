@@ -47,10 +47,36 @@ func (repository *RoomRepository) FindByID(roomID string) (entities.Room, error)
 
 	if err := result.Decode(&room); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return entities.Room{}, application.NewResourceNotFoundError("usuário não encontrado")
+			return entities.Room{}, application.NewResourceNotFoundError("sala não encontrada")
 		}
 		return entities.Room{}, err
 	}
 
 	return room, nil
+}
+
+func (repository *RoomRepository) Update(roomID string, room entities.Room) (entities.Room, error) {
+	ctx := context.TODO()
+	filter := bson.M{"_id": roomID}
+
+	update := bson.M{
+		"$set": bson.M{
+			"title":      room.Title,
+			"questions":  room.Questions,
+			"author":     room.Author,
+			"ended_at":   room.EndedAt,
+			"updated_at": time.Now(),
+		},
+	}
+
+	_, err := repository.roomCollection.UpdateOne(ctx, filter, update)
+
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return entities.Room{}, application.NewResourceNotFoundError("sala não encontrada")
+		}
+		return entities.Room{}, err
+	}
+
+	return repository.FindByID(roomID)
 }

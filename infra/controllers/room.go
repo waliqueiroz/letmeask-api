@@ -42,3 +42,21 @@ func (controller *RoomController) FindByID(ctx *fiber.Ctx) error {
 
 	return ctx.JSON(room)
 }
+
+func (controller *RoomController) CreateQuestion(ctx *fiber.Ctx) error {
+	roomID := ctx.Params("roomID")
+
+	var question entities.Question
+
+	err := ctx.BodyParser(&question)
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	room, err := controller.roomService.CreateQuestion(roomID, question)
+	if err != nil {
+		return err
+	}
+
+	return ctx.Status(fiber.StatusCreated).JSON(room)
+}
