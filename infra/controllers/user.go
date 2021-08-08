@@ -45,12 +45,12 @@ func (controller *UserController) Create(ctx *fiber.Ctx) error {
 func (controller *UserController) FindByID(ctx *fiber.Ctx) error {
 	userID := ctx.Params("userID")
 
-	users, err := controller.userService.FindByID(userID)
+	user, err := controller.userService.FindByID(userID)
 	if err != nil {
 		return err
 	}
 
-	return ctx.JSON(users)
+	return ctx.JSON(user)
 }
 
 func (controller *UserController) Update(ctx *fiber.Ctx) error {

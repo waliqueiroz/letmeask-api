@@ -33,6 +33,10 @@ func main() {
 	authService := services.NewAuthService(userRepository, securityProvider, authProvider)
 	authController := controllers.NewAuthController(authService)
 
+	roomRepository := repositories.NewRoomRepository(db)
+	roomService := services.NewRoomService(roomRepository)
+	roomController := controllers.NewRoomController(roomService)
+
 	authMiddleware := middlewares.NewAuthMiddleware(configuration)
 
 	app := fiber.New(fiber.Config{
@@ -43,6 +47,7 @@ func main() {
 
 	routes.SetupAuthRoutes(api, authController)
 	routes.SetupUserRoutes(api, authMiddleware, userController)
+	routes.SetupRoomRoutes(api, authMiddleware, roomController)
 
 	app.Listen(":8080")
 }
