@@ -3,6 +3,7 @@ package errors
 import (
 	"github.com/gofiber/fiber/v2"
 	application "github.com/waliqueiroz/letmeask-api/application/errors"
+	domain "github.com/waliqueiroz/letmeask-api/domain/errors"
 )
 
 func Handler(ctx *fiber.Ctx, err error) error {
@@ -10,7 +11,7 @@ func Handler(ctx *fiber.Ctx, err error) error {
 	switch e := err.(type) {
 	case *fiber.Error:
 		return sendError(ctx, e.Code, e.Error())
-	case *application.ResourceNotFoundError:
+	case *ResourceNotFoundError, *domain.QuestionNotFoundError:
 		return sendError(ctx, fiber.StatusNotFound, e.Error())
 	case *application.UnauthorizedError:
 		return sendError(ctx, fiber.StatusUnauthorized, e.Error())

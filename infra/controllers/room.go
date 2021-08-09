@@ -60,3 +60,22 @@ func (controller *RoomController) CreateQuestion(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusCreated).JSON(room)
 }
+
+func (controller *RoomController) LikeQuestion(ctx *fiber.Ctx) error {
+	roomID := ctx.Params("roomID")
+	questionID := ctx.Params("questionID")
+
+	var like entities.Like
+
+	err := ctx.BodyParser(&like)
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	room, err := controller.roomService.LikeQuestion(roomID, questionID, like)
+	if err != nil {
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(room)
+}

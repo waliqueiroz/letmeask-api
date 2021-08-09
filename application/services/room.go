@@ -12,6 +12,7 @@ type RoomService interface {
 	Create(room entities.Room) (entities.Room, error)
 	FindByID(roomID string) (entities.Room, error)
 	CreateQuestion(roomID string, question entities.Question) (entities.Room, error)
+	LikeQuestion(roomID string, questionID string, like entities.Like) (entities.Room, error)
 }
 
 type roomService struct {
@@ -40,7 +41,24 @@ func (service *roomService) CreateQuestion(roomID string, question entities.Ques
 
 	question.ID = uuid.New().String()
 	question.CreatedAt = time.Now()
-	room.Questions = append(room.Questions, question)
+	room.AddQuestion(question)
+
+	return service.roomRepository.Update(roomID, room)
+}
+
+func (service *roomService) LikeQuestion(roomID string, questionID string, like entities.Like) (entities.Room, error) {
+	room, err := service.roomRepository.FindByID(roomID)
+	if err != nil {
+		return entities.Room{}, err
+	}
+
+	like.ID = uuid.New().String()
+	like.CreatedAt = time.Now()
+
+	err = room.LikeQuestion(questionID, like)
+	if err != nil {
+		return entities.Room{}, err
+	}
 
 	return service.roomRepository.Update(roomID, room)
 }

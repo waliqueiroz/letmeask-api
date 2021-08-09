@@ -1,6 +1,10 @@
 package entities
 
-import "time"
+import (
+	"time"
+
+	"github.com/waliqueiroz/letmeask-api/domain/errors"
+)
 
 type Room struct {
 	ID        string     `json:"id" bson:"_id"`
@@ -10,4 +14,19 @@ type Room struct {
 	EndedAt   *time.Time `json:"ended_at,omitempty" bson:"ended_at,omitempty"`
 	CreatedAt time.Time  `json:"created_at" bson:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at" bson:"updated_at"`
+}
+
+func (room *Room) AddQuestion(question Question) {
+	room.Questions = append(room.Questions, question)
+}
+
+func (room *Room) LikeQuestion(questionID string, like Like) error {
+	for key, question := range room.Questions {
+		if question.ID == questionID {
+			room.Questions[key].AddLike(like)
+			return nil
+		}
+	}
+
+	return errors.NewQuestionNotFoundError("pergunta não encontrada.")
 }

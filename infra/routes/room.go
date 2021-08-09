@@ -9,4 +9,5 @@ func SetupRoomRoutes(router fiber.Router, authMiddleware fiber.Handler, roomCont
 	router.Post("/rooms", roomController.Create)
 	router.Get("/rooms/:roomID", roomController.FindByID)
 	router.Post("/rooms/:roomID/questions", roomController.CreateQuestion)
+	router.Post("/rooms/:roomID/questions/:questionID/likes", roomController.LikeQuestion)
 }

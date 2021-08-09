@@ -11,3 +11,7 @@ type Question struct {
 	Likes         []Like    `json:"likes,omitempty" bson:"likes,omitempty"`
 	CreatedAt     time.Time `json:"created_at" bson:"created_at"`
 }
+
+func (question *Question) AddLike(like Like) {
+	question.Likes = append(question.Likes, like)
+}
