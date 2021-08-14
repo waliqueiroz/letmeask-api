@@ -5,10 +5,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
-	infra "github.com/waliqueiroz/letmeask-api/internal/infrastructure/errors"
+	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/database/mongodb/models"
+	infrastructure "github.com/waliqueiroz/letmeask-api/internal/infrastructure/errors"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -23,7 +24,7 @@ func NewUserRepository(db *mongo.Database) *UserRepository {
 }
 
 func (repository *UserRepository) FindAll() ([]entities.User, error) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	result, err := repository.userCollection.Find(ctx, bson.M{})
 
 	if err != nil {
@@ -35,57 +36,70 @@ func (repository *UserRepository) FindAll() ([]entities.User, error) {
 	var users []entities.User
 
 	for result.Next(ctx) {
-		var user entities.User
+		var user models.User
 
 		err := result.Decode(&user)
 		if err != nil {
 			return []entities.User{}, err
 		}
 
-		users = append(users, user)
+		users = append(users, user.ToDomain())
 	}
 
 	return users, nil
 }
 
 func (repository *UserRepository) Create(user entities.User) (entities.User, error) {
-	ctx := context.TODO()
+	newUser := models.User{
+		Name:      user.Name,
+		Avatar:    user.Avatar,
+		Email:     user.Email,
+		Password:  user.Password,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
 
-	user.ID = uuid.New().String()
-	user.CreatedAt = time.Now()
-	user.UpdatedAt = time.Now()
-
-	_, err := repository.userCollection.InsertOne(ctx, user)
+	result, err := repository.userCollection.InsertOne(context.Background(), newUser)
 	if err != nil {
 		return entities.User{}, err
 	}
 
-	return repository.FindByID(user.ID)
+	objectID := result.InsertedID.(primitive.ObjectID)
+
+	return repository.FindByID(objectID.Hex())
 }
 
 func (repository *UserRepository) FindByID(userID string) (entities.User, error) {
-	ctx := context.TODO()
-	filter := bson.M{"_id": userID}
+	id, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return entities.User{}, err
+	}
 
-	result := repository.userCollection.FindOne(ctx, filter)
+	filter := bson.M{"_id": id}
 
-	var user entities.User
+	result := repository.userCollection.FindOne(context.Background(), filter)
+
+	var user models.User
 
 	if err := result.Decode(&user); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return entities.User{}, infra.NewResourceNotFoundError("usuário não encontrado")
+			return entities.User{}, infrastructure.NewResourceNotFoundError("usuário não encontrado")
 		}
 		return entities.User{}, err
 	}
 
-	return user, nil
+	return user.ToDomain(), nil
 }
 
 func (repository *UserRepository) Delete(userID string) error {
-	ctx := context.TODO()
-	filter := bson.M{"_id": userID}
+	id, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return err
+	}
 
-	_, err := repository.userCollection.DeleteOne(ctx, filter)
+	filter := bson.M{"_id": id}
+
+	_, err = repository.userCollection.DeleteOne(context.Background(), filter)
 
 	if err != nil {
 		return err
@@ -95,8 +109,12 @@ func (repository *UserRepository) Delete(userID string) error {
 }
 
 func (repository *UserRepository) Update(userID string, user entities.User) (entities.User, error) {
-	ctx := context.TODO()
-	filter := bson.M{"_id": userID}
+	id, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return entities.User{}, err
+	}
+
+	filter := bson.M{"_id": id}
 
 	update := bson.M{
 		"$set": bson.M{
@@ -106,11 +124,11 @@ func (repository *UserRepository) Update(userID string, user entities.User) (ent
 		},
 	}
 
-	_, err := repository.userCollection.UpdateOne(ctx, filter, update)
+	_, err = repository.userCollection.UpdateOne(context.Background(), filter, update)
 
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return entities.User{}, infra.NewResourceNotFoundError("usuário não encontrado")
+			return entities.User{}, infrastructure.NewResourceNotFoundError("usuário não encontrado")
 		}
 		return entities.User{}, err
 	}
@@ -119,8 +137,12 @@ func (repository *UserRepository) Update(userID string, user entities.User) (ent
 }
 
 func (repository *UserRepository) UpdatePassword(userID string, password string) error {
-	ctx := context.TODO()
-	filter := bson.M{"_id": userID}
+	id, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{"_id": id}
 
 	update := bson.M{
 		"$set": bson.M{
@@ -129,11 +151,11 @@ func (repository *UserRepository) UpdatePassword(userID string, password string)
 		},
 	}
 
-	_, err := repository.userCollection.UpdateOne(ctx, filter, update)
+	_, err = repository.userCollection.UpdateOne(context.Background(), filter, update)
 
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return infra.NewResourceNotFoundError("usuário não encontrado")
+			return infrastructure.NewResourceNotFoundError("usuário não encontrado")
 		}
 		return err
 	}
@@ -142,19 +164,18 @@ func (repository *UserRepository) UpdatePassword(userID string, password string)
 }
 
 func (repository *UserRepository) FindByEmail(email string) (entities.User, error) {
-	ctx := context.TODO()
 	filter := bson.M{"email": email}
 
-	result := repository.userCollection.FindOne(ctx, filter)
+	result := repository.userCollection.FindOne(context.Background(), filter)
 
-	var user entities.User
+	var user models.User
 
 	if err := result.Decode(&user); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return entities.User{}, infra.NewResourceNotFoundError("usuário não encontrado")
+			return entities.User{}, infrastructure.NewResourceNotFoundError("usuário não encontrado")
 		}
 		return entities.User{}, err
 	}
 
-	return user, nil
+	return user.ToDomain(), nil
 }

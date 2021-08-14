@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
-	infra "github.com/waliqueiroz/letmeask-api/internal/infrastructure/errors"
+	infrastructure "github.com/waliqueiroz/letmeask-api/internal/infrastructure/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -47,7 +47,7 @@ func (repository *RoomRepository) FindByID(roomID string) (entities.Room, error)
 
 	if err := result.Decode(&room); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return entities.Room{}, infra.NewResourceNotFoundError("sala não encontrada")
+			return entities.Room{}, infrastructure.NewResourceNotFoundError("sala não encontrada")
 		}
 		return entities.Room{}, err
 	}
@@ -73,7 +73,7 @@ func (repository *RoomRepository) Update(roomID string, room entities.Room) (ent
 
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return entities.Room{}, infra.NewResourceNotFoundError("sala não encontrada")
+			return entities.Room{}, infrastructure.NewResourceNotFoundError("sala não encontrada")
 		}
 		return entities.Room{}, err
 	}
