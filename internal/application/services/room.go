@@ -1,9 +1,6 @@
 package services
 
 import (
-	"time"
-
-	"github.com/google/uuid"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/repositories"
 )
@@ -39,8 +36,6 @@ func (service *roomService) CreateQuestion(roomID string, question entities.Ques
 		return entities.Room{}, err
 	}
 
-	question.ID = uuid.New().String()
-	question.CreatedAt = time.Now()
 	room.AddQuestion(question)
 
 	return service.roomRepository.Update(roomID, room)
@@ -51,9 +46,6 @@ func (service *roomService) LikeQuestion(roomID string, questionID string, like 
 	if err != nil {
 		return entities.Room{}, err
 	}
-
-	like.ID = uuid.New().String()
-	like.CreatedAt = time.Now()
 
 	err = room.LikeQuestion(questionID, like)
 	if err != nil {

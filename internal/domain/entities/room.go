@@ -17,10 +17,12 @@ type Room struct {
 }
 
 func (room *Room) AddQuestion(question Question) {
+	question.CreatedAt = time.Now()
 	room.Questions = append(room.Questions, question)
 }
 
 func (room *Room) LikeQuestion(questionID string, like Like) error {
+	like.CreatedAt = time.Now()
 	for key, question := range room.Questions {
 		if question.ID == questionID {
 			room.Questions[key].AddLike(like)

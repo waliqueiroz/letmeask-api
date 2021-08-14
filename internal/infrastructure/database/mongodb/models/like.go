@@ -1,9 +1,21 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"time"
+
+	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
+)
 
 type Like struct {
-	ID        string    `bson:"_id,omitempty"`
 	Author    Author    `bson:"author"`
 	CreatedAt time.Time `bson:"created_at"`
+}
+
+func (l Like) ToDomain(ID int) entities.Like {
+	return entities.Like{
+		ID:        fmt.Sprintf("%d", ID),
+		Author:    l.Author.ToDomain(),
+		CreatedAt: l.CreatedAt,
+	}
 }
