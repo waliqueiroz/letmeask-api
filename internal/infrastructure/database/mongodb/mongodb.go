@@ -1,4 +1,4 @@
-package database
+package mongodb
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func ConnectMongoDB(configuration configurations.Configuration) (*mongo.Database, error) {
+func Connect(configuration configurations.Configuration) (*mongo.Database, error) {
 	ctx := context.Background()
 
 	clientOptions := options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s/", configuration.Database.DBHost, configuration.Database.DBPort))

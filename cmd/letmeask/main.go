@@ -7,18 +7,21 @@ import (
 	"github.com/waliqueiroz/letmeask-api/internal/application/services"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/controllers"
-	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/database"
+	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/database/mongodb"
+	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/database/mongodb/repositories"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/errors"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/middlewares"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/providers"
-	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/repositories"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/routes"
 )
 
 func main() {
-	configuration := configurations.Load()
+	configuration, err := configurations.Load()
+	if err != nil {
+		log.Fatalln(err)
+	}
 
-	db, err := database.ConnectMongoDB(configuration)
+	db, err := mongodb.Connect(configuration)
 	if err != nil {
 		log.Fatalln(err)
 	}

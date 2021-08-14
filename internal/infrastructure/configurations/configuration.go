@@ -1,7 +1,6 @@
 package configurations
 
 import (
-	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -12,9 +11,9 @@ type Configuration struct {
 	Auth     Auth
 }
 
-func Load() Configuration {
+func Load() (Configuration, error) {
 	if err := godotenv.Load("../../.env"); err != nil {
-		log.Fatal(err)
+		return Configuration{}, err
 	}
 
 	configuration := Configuration{
@@ -28,5 +27,5 @@ func Load() Configuration {
 		},
 	}
 
-	return configuration
+	return configuration, nil
 }
