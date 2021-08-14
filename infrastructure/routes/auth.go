@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/waliqueiroz/letmeask-api/infra/controllers"
+	"github.com/waliqueiroz/letmeask-api/infrastructure/controllers"
 )
 
 func SetupAuthRoutes(router fiber.Router, authController *controllers.AuthController) {

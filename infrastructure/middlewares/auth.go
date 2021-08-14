@@ -3,7 +3,7 @@ package middlewares
 import (
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v2"
-	"github.com/waliqueiroz/letmeask-api/infra/configurations"
+	"github.com/waliqueiroz/letmeask-api/infrastructure/configurations"
 )
 
 func NewAuthMiddleware(configuration configurations.Configuration) fiber.Handler {

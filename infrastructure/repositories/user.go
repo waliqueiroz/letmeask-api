@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/waliqueiroz/letmeask-api/domain/entities"
-	infra "github.com/waliqueiroz/letmeask-api/infra/errors"
+	infra "github.com/waliqueiroz/letmeask-api/infrastructure/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )

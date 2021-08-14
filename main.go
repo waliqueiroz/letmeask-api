@@ -5,14 +5,14 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/waliqueiroz/letmeask-api/application/services"
-	"github.com/waliqueiroz/letmeask-api/infra/configurations"
-	"github.com/waliqueiroz/letmeask-api/infra/controllers"
-	"github.com/waliqueiroz/letmeask-api/infra/database"
-	"github.com/waliqueiroz/letmeask-api/infra/errors"
-	"github.com/waliqueiroz/letmeask-api/infra/middlewares"
-	"github.com/waliqueiroz/letmeask-api/infra/providers"
-	"github.com/waliqueiroz/letmeask-api/infra/repositories"
-	"github.com/waliqueiroz/letmeask-api/infra/routes"
+	"github.com/waliqueiroz/letmeask-api/infrastructure/configurations"
+	"github.com/waliqueiroz/letmeask-api/infrastructure/controllers"
+	"github.com/waliqueiroz/letmeask-api/infrastructure/database"
+	"github.com/waliqueiroz/letmeask-api/infrastructure/errors"
+	"github.com/waliqueiroz/letmeask-api/infrastructure/middlewares"
+	"github.com/waliqueiroz/letmeask-api/infrastructure/providers"
+	"github.com/waliqueiroz/letmeask-api/infrastructure/repositories"
+	"github.com/waliqueiroz/letmeask-api/infrastructure/routes"
 )
 
 func main() {

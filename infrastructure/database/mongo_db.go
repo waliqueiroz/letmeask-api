@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/waliqueiroz/letmeask-api/infra/configurations"
+	"github.com/waliqueiroz/letmeask-api/infrastructure/configurations"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )

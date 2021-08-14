@@ -2,7 +2,7 @@ package providers
 
 import (
 	"github.com/golang-jwt/jwt"
-	"github.com/waliqueiroz/letmeask-api/infra/configurations"
+	"github.com/waliqueiroz/letmeask-api/infrastructure/configurations"
 )
 
 type AuthProvider struct {
