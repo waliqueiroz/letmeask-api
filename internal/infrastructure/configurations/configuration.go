@@ -12,7 +12,7 @@ type Configuration struct {
 }
 
 func Load() (Configuration, error) {
-	if err := godotenv.Load("../../.env"); err != nil {
+	if err := godotenv.Load(".env"); err != nil {
 		return Configuration{}, err
 	}
 

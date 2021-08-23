@@ -19,8 +19,8 @@ type Room struct {
 
 func (r Room) ToDomain() entities.Room {
 	var questions []entities.Question
-	for key, question := range r.Questions {
-		questions = append(questions, question.ToDomain(key))
+	for _, question := range r.Questions {
+		questions = append(questions, question.ToDomain())
 	}
 
 	return entities.Room{

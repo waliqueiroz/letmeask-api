@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
@@ -109,14 +108,25 @@ func (repository *RoomRepository) Update(roomID string, room entities.Room) (ent
 
 	return repository.FindByID(roomID)
 }
+
 func (repository *RoomRepository) entityQuestionsToModelQuestions(entityQuestions []entities.Question) ([]models.Question, error) {
 	var questions []models.Question
 
 	for _, entityQuestion := range entityQuestions {
+		var questionID primitive.ObjectID
+		var err error
+
+		if entityQuestion.ID == "" {
+			questionID = primitive.NewObjectID()
+		} else {
+			questionID, err = primitive.ObjectIDFromHex(entityQuestion.ID)
+			if err != nil {
+				return []models.Question{}, err
+			}
+		}
 
 		authorID, err := primitive.ObjectIDFromHex(entityQuestion.Author.ID)
 		if err != nil {
-			fmt.Println("Deu pau aqui")
 			return []models.Question{}, err
 		}
 
@@ -126,6 +136,7 @@ func (repository *RoomRepository) entityQuestionsToModelQuestions(entityQuestion
 		}
 
 		question := models.Question{
+			ID:            questionID,
 			Content:       entityQuestion.Content,
 			IsHighlighted: entityQuestion.IsHighlighted,
 			IsAnswered:    entityQuestion.IsAnswered,
@@ -147,14 +158,25 @@ func (repository *RoomRepository) entityQuestionsToModelQuestions(entityQuestion
 func (repository *RoomRepository) entityLikesToModelLikes(entityLikes []entities.Like) ([]models.Like, error) {
 	var likes []models.Like
 	for _, entityLike := range entityLikes {
+		var likeID primitive.ObjectID
+		var err error
+
+		if entityLike.ID == "" {
+			likeID = primitive.NewObjectID()
+		} else {
+			likeID, err = primitive.ObjectIDFromHex(entityLike.ID)
+			if err != nil {
+				return []models.Like{}, err
+			}
+		}
 
 		authorID, err := primitive.ObjectIDFromHex(entityLike.Author.ID)
 		if err != nil {
-			fmt.Println("Deu pau aqui")
 			return []models.Like{}, err
 		}
 
 		like := models.Like{
+			ID: likeID,
 			Author: models.Author{
 				ID:     authorID,
 				Name:   entityLike.Author.Name,
