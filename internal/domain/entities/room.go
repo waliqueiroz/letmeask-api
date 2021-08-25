@@ -32,3 +32,14 @@ func (room *Room) LikeQuestion(questionID string, like Like) error {
 
 	return errors.NewQuestionNotFoundError("pergunta não encontrada.")
 }
+
+func (room *Room) DeslikeQuestion(questionID string, likeID string) error {
+	for key, question := range room.Questions {
+		if question.ID == questionID {
+			room.Questions[key].RemoveLike(likeID)
+			return nil
+		}
+	}
+
+	return errors.NewQuestionNotFoundError("pergunta não encontrada.")
+}

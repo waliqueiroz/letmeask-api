@@ -79,3 +79,16 @@ func (controller *RoomController) LikeQuestion(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(room)
 }
+
+func (controller *RoomController) DeslikeQuestion(ctx *fiber.Ctx) error {
+	roomID := ctx.Params("roomID")
+	questionID := ctx.Params("questionID")
+	likeID := ctx.Params("likeID")
+
+	room, err := controller.roomService.DeslikeQuestion(roomID, questionID, likeID)
+	if err != nil {
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(room)
+}
