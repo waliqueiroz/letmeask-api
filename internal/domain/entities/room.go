@@ -43,3 +43,25 @@ func (room *Room) DeslikeQuestion(questionID string, likeID string) error {
 
 	return errors.NewQuestionNotFoundError("pergunta não encontrada.")
 }
+
+func (room *Room) MarkQuestionAsAnswered(questionID string) error {
+	for key, question := range room.Questions {
+		if question.ID == questionID {
+			room.Questions[key].IsAnswered = true
+			return nil
+		}
+	}
+
+	return errors.NewQuestionNotFoundError("pergunta não encontrada.")
+}
+
+func (room *Room) UpdateQuestionHighlight(questionID string, highligh bool) error {
+	for key, question := range room.Questions {
+		if question.ID == questionID {
+			room.Questions[key].IsHighlighted = highligh
+			return nil
+		}
+	}
+
+	return errors.NewQuestionNotFoundError("pergunta não encontrada.")
+}

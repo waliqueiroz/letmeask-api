@@ -3,6 +3,7 @@ package services
 import (
 	"time"
 
+	"github.com/waliqueiroz/letmeask-api/internal/application/dtos"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/repositories"
 )
@@ -14,6 +15,7 @@ type RoomService interface {
 	CreateQuestion(roomID string, question entities.Question) (entities.Room, error)
 	LikeQuestion(roomID string, questionID string, like entities.Like) (entities.Room, error)
 	DeslikeQuestion(roomID string, questionID string, likeID string) (entities.Room, error)
+	UpdateQuestion(roomID string, questionID string, questionData dtos.UpdateQuestionDTO) (entities.Room, error)
 }
 
 type roomService struct {
@@ -53,6 +55,23 @@ func (service *roomService) CreateQuestion(roomID string, question entities.Ques
 	}
 
 	room.AddQuestion(question)
+
+	return service.roomRepository.Update(roomID, room)
+}
+
+func (service *roomService) UpdateQuestion(roomID string, questionID string, questionData dtos.UpdateQuestionDTO) (entities.Room, error) {
+	room, err := service.roomRepository.FindByID(roomID)
+	if err != nil {
+		return entities.Room{}, err
+	}
+
+	if questionData.IsAnswered != nil {
+		room.MarkQuestionAsAnswered(questionID)
+	}
+
+	if questionData.IsHighlighted != nil {
+		room.UpdateQuestionHighlight(questionID, *questionData.IsHighlighted)
+	}
 
 	return service.roomRepository.Update(roomID, room)
 }

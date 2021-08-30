@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/waliqueiroz/letmeask-api/internal/application/dtos"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
 )
@@ -72,6 +73,25 @@ func (controller *RoomController) CreateQuestion(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(room)
 }
 
+func (controller *RoomController) UpdateQuestion(ctx *fiber.Ctx) error {
+	roomID := ctx.Params("roomID")
+	questionID := ctx.Params("questionID")
+
+	var questionData dtos.UpdateQuestionDTO
+
+	err := ctx.BodyParser(&questionData)
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	room, err := controller.roomService.UpdateQuestion(roomID, questionID, questionData)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(room)
+}
+
 func (controller *RoomController) LikeQuestion(ctx *fiber.Ctx) error {
 	roomID := ctx.Params("roomID")
 	questionID := ctx.Params("questionID")
@@ -88,7 +108,7 @@ func (controller *RoomController) LikeQuestion(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(room)
+	return ctx.JSON(room)
 }
 
 func (controller *RoomController) DeslikeQuestion(ctx *fiber.Ctx) error {
@@ -101,5 +121,5 @@ func (controller *RoomController) DeslikeQuestion(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(room)
+	return ctx.JSON(room)
 }
