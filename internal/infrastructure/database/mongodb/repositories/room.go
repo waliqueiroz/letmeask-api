@@ -85,16 +85,18 @@ func (repository *RoomRepository) Update(roomID string, room entities.Room) (ent
 		return entities.Room{}, err
 	}
 
-	update := bson.M{
-		"$set": bson.M{
-			"title":      room.Title,
-			"questions":  questions,
-			"updated_at": time.Now(),
-		},
+	fields := bson.M{
+		"title":      room.Title,
+		"questions":  questions,
+		"updated_at": time.Now(),
 	}
 
 	if room.EndedAt != nil {
-		update["ended_at"] = room.EndedAt
+		fields["ended_at"] = room.EndedAt
+	}
+
+	update := bson.M{
+		"$set": fields,
 	}
 
 	_, err = repository.roomCollection.UpdateOne(context.Background(), filter, update)

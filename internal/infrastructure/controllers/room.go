@@ -32,6 +32,17 @@ func (controller *RoomController) Create(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(room)
 }
 
+func (controller *RoomController) EndRoom(ctx *fiber.Ctx) error {
+	roomID := ctx.Params("roomID")
+
+	room, err := controller.roomService.EndRoom(roomID)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(room)
+}
+
 func (controller *RoomController) FindByID(ctx *fiber.Ctx) error {
 	roomID := ctx.Params("roomID")
 
