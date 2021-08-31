@@ -12,8 +12,14 @@ type Question struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
-func (question *Question) AddLike(like Like) {
-	question.Likes = append(question.Likes, like)
+func (question *Question) AddLike(newLike Like) {
+	for _, like := range question.Likes {
+		if like.Author.ID == newLike.Author.ID {
+			return
+		}
+	}
+
+	question.Likes = append(question.Likes, newLike)
 }
 
 func (question *Question) RemoveLike(likeID string) {
