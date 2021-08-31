@@ -6,11 +6,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations"
-	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/controllers"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/database/mongodb"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/database/mongodb/repositories"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/errors"
-	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/middlewares"
+	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/controllers"
+	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/middlewares"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/providers"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/routes"
 )
