@@ -123,3 +123,15 @@ func (controller *RoomController) DeslikeQuestion(ctx *fiber.Ctx) error {
 
 	return ctx.JSON(room)
 }
+
+func (controller *RoomController) DeleteQuestion(ctx *fiber.Ctx) error {
+	roomID := ctx.Params("roomID")
+	questionID := ctx.Params("questionID")
+
+	room, err := controller.roomService.DeleteQuestion(roomID, questionID)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(room)
+}

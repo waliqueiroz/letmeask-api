@@ -16,6 +16,7 @@ type RoomService interface {
 	LikeQuestion(roomID string, questionID string, like entities.Like) (entities.Room, error)
 	DeslikeQuestion(roomID string, questionID string, likeID string) (entities.Room, error)
 	UpdateQuestion(roomID string, questionID string, questionData dtos.UpdateQuestionDTO) (entities.Room, error)
+	DeleteQuestion(roomID string, questionID string) (entities.Room, error)
 }
 
 type roomService struct {
@@ -100,6 +101,17 @@ func (service *roomService) DeslikeQuestion(roomID string, questionID string, li
 	if err != nil {
 		return entities.Room{}, err
 	}
+
+	return service.roomRepository.Update(roomID, room)
+}
+
+func (service *roomService) DeleteQuestion(roomID string, questionID string) (entities.Room, error) {
+	room, err := service.roomRepository.FindByID(roomID)
+	if err != nil {
+		return entities.Room{}, err
+	}
+
+	room.DeleteQuestion(questionID)
 
 	return service.roomRepository.Update(roomID, room)
 }

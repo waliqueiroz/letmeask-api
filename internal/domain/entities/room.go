@@ -65,3 +65,12 @@ func (room *Room) UpdateQuestionHighlight(questionID string, highligh bool) erro
 
 	return errors.NewQuestionNotFoundError("pergunta não encontrada.")
 }
+
+func (room *Room) DeleteQuestion(questionID string) {
+	for key, question := range room.Questions {
+		if question.ID == questionID {
+			room.Questions = append(room.Questions[:key], room.Questions[key+1:]...)
+			break
+		}
+	}
+}

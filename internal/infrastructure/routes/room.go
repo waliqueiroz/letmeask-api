@@ -13,4 +13,5 @@ func SetupRoomRoutes(router fiber.Router, authMiddleware fiber.Handler, roomCont
 	router.Post("/rooms/:roomID/questions/:questionID/likes", roomController.LikeQuestion)
 	router.Delete("/rooms/:roomID/questions/:questionID/likes/:likeID", roomController.DeslikeQuestion)
 	router.Patch("/rooms/:roomID/questions/:questionID", roomController.UpdateQuestion)
+	router.Delete("/rooms/:roomID/questions/:questionID", roomController.DeleteQuestion)
 }
