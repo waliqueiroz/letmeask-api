@@ -11,8 +11,8 @@ import (
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/errors"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/controllers"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/middlewares"
+	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/routes"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/providers"
-	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/routes"
 )
 
 func main() {
