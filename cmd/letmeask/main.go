@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services"
+	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/authentication/jwt"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/database/mongodb"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/database/mongodb/repositories"
@@ -12,7 +13,7 @@ import (
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/controllers"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/middlewares"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/routes"
-	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/providers"
+	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/security/bcrypt"
 )
 
 func main() {
@@ -26,8 +27,8 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	authProvider := providers.NewAuthProvider(configuration)
-	securityProvider := providers.NewSecurityProvider()
+	authProvider := jwt.NewJwtProvider(configuration)
+	securityProvider := bcrypt.NewBcryptProvider()
 
 	userRepository := repositories.NewUserRepository(db)
 	userService := services.NewUserService(userRepository, securityProvider)

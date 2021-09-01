@@ -1,21 +1,21 @@
-package providers
+package jwt
 
 import (
 	"github.com/golang-jwt/jwt"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations"
 )
 
-type AuthProvider struct {
+type JwtProvider struct {
 	configuration configurations.Configuration
 }
 
-func NewAuthProvider(configuration configurations.Configuration) *AuthProvider {
-	return &AuthProvider{
+func NewJwtProvider(configuration configurations.Configuration) *JwtProvider {
+	return &JwtProvider{
 		configuration,
 	}
 }
 
-func (provider *AuthProvider) CreateToken(userID string, expiresIn int64) (string, error) {
+func (provider *JwtProvider) CreateToken(userID string, expiresIn int64) (string, error) {
 	permissions := jwt.MapClaims{}
 	permissions["authorized"] = true
 	permissions["exp"] = expiresIn
