@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/authentication/jwt"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations"
@@ -46,6 +47,8 @@ func main() {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: errors.Handler,
 	})
+
+	app.Use(cors.New())
 
 	api := app.Group("/api")
 
