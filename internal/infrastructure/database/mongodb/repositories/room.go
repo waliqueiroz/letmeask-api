@@ -51,25 +51,44 @@ func (repository *RoomRepository) Create(room entities.Room) (entities.Room, err
 }
 
 func (repository *RoomRepository) FindByID(roomID string) (entities.Room, error) {
+	ctx := context.Background()
 	id, err := primitive.ObjectIDFromHex(roomID)
 	if err != nil {
 		return entities.Room{}, err
 	}
 
-	filter := bson.M{"_id": id}
+	pipeline := []bson.M{
+		{"$match": bson.M{"_id": id}},
+		{"$unwind": "$questions"},
+		{"$sort": bson.M{"questions.created_at": -1}},
+		{"$group": bson.M{
+			"_id":        "$_id",
+			"title":      bson.M{"$first": "$title"},
+			"author":     bson.M{"$first": "$author"},
+			"created_at": bson.M{"$first": "$created_at"},
+			"updated_at": bson.M{"$first": "$updated_at"},
+			"ended_at":   bson.M{"$first": "$ended_at"},
+			"questions":  bson.M{"$push": "$questions"},
+		}},
+	}
 
-	result := repository.roomCollection.FindOne(context.Background(), filter)
-
-	var room models.Room
-
-	if err := result.Decode(&room); err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return entities.Room{}, infrastructure.NewResourceNotFoundError("sala não encontrada")
-		}
+	result, err := repository.roomCollection.Aggregate(ctx, pipeline)
+	if err != nil {
 		return entities.Room{}, err
 	}
 
-	return room.ToDomain(), nil
+	if result.Next(ctx) {
+		var room models.Room
+
+		err := result.Decode(&room)
+		if err != nil {
+			return entities.Room{}, err
+		}
+
+		return room.ToDomain(), nil
+	}
+
+	return entities.Room{}, infrastructure.NewResourceNotFoundError("sala não encontrada")
 }
 
 func (repository *RoomRepository) Update(roomID string, room entities.Room) (entities.Room, error) {
