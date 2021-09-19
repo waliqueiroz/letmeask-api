@@ -59,7 +59,7 @@ func (repository *RoomRepository) FindByID(roomID string) (entities.Room, error)
 
 	pipeline := []bson.M{
 		{"$match": bson.M{"_id": id}},
-		{"$unwind": "$questions"},
+		{"$unwind": bson.M{"path": "$questions", "preserveNullAndEmptyArrays": true}},
 		{"$sort": bson.M{"questions.created_at": -1}},
 		{"$group": bson.M{
 			"_id":        "$_id",
