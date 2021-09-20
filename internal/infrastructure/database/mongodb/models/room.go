@@ -1,7 +1,6 @@
 package models
 
 import (
-	"reflect"
 	"time"
 
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
@@ -21,9 +20,7 @@ type Room struct {
 func (r Room) ToDomain() entities.Room {
 	var questions []entities.Question
 	for _, question := range r.Questions {
-		if !reflect.DeepEqual(question, Question{}) { // TODO - Melhorar isso aqui talvez?
-			questions = append(questions, question.ToDomain())
-		}
+		questions = append(questions, question.ToDomain())
 	}
 
 	return entities.Room{

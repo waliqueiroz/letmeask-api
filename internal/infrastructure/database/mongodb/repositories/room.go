@@ -70,6 +70,18 @@ func (repository *RoomRepository) FindByID(roomID string) (entities.Room, error)
 			"ended_at":   bson.M{"$first": "$ended_at"},
 			"questions":  bson.M{"$push": "$questions"},
 		}},
+		{"$addFields": bson.M{
+			"questions": bson.M{
+				"$filter": bson.M{
+					"input": "$questions",
+					"as":    "question",
+					"cond": bson.M{"$and": []interface{}{
+						bson.M{"$ne": []interface{}{"$$question", nil}},
+						bson.M{"$ne": []interface{}{"$$question.content", ""}},
+					}},
+				},
+			},
+		}},
 	}
 
 	result, err := repository.roomCollection.Aggregate(ctx, pipeline)
