@@ -30,7 +30,7 @@ func (room *Room) LikeQuestion(questionID string, like Like) error {
 		}
 	}
 
-	return errors.NewQuestionNotFoundError("pergunta não encontrada.")
+	return errors.NewResourceNotFoundError("pergunta não encontrada.")
 }
 
 func (room *Room) DeslikeQuestion(questionID string, likeID string) error {
@@ -41,7 +41,7 @@ func (room *Room) DeslikeQuestion(questionID string, likeID string) error {
 		}
 	}
 
-	return errors.NewQuestionNotFoundError("pergunta não encontrada.")
+	return errors.NewResourceNotFoundError("pergunta não encontrada.")
 }
 
 func (room *Room) MarkQuestionAsAnswered(questionID string) error {
@@ -52,7 +52,7 @@ func (room *Room) MarkQuestionAsAnswered(questionID string) error {
 		}
 	}
 
-	return errors.NewQuestionNotFoundError("pergunta não encontrada.")
+	return errors.NewResourceNotFoundError("pergunta não encontrada.")
 }
 
 func (room *Room) UpdateQuestionHighlight(questionID string, highligh bool) error {
@@ -63,7 +63,7 @@ func (room *Room) UpdateQuestionHighlight(questionID string, highligh bool) erro
 		}
 	}
 
-	return errors.NewQuestionNotFoundError("pergunta não encontrada.")
+	return errors.NewResourceNotFoundError("pergunta não encontrada.")
 }
 
 func (room *Room) DeleteQuestion(questionID string) {

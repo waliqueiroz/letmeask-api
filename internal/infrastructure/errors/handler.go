@@ -11,7 +11,7 @@ func Handler(ctx *fiber.Ctx, err error) error {
 	switch e := err.(type) {
 	case *fiber.Error:
 		return sendError(ctx, e.Code, e.Error())
-	case *ResourceNotFoundError, *domain.QuestionNotFoundError:
+	case *domain.ResourceNotFoundError:
 		return sendError(ctx, fiber.StatusNotFound, e.Error())
 	case *application.UnauthorizedError:
 		return sendError(ctx, fiber.StatusUnauthorized, e.Error())

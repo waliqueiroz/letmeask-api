@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
+	domain "github.com/waliqueiroz/letmeask-api/internal/domain/errors"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/database/mongodb/models"
-	infrastructure "github.com/waliqueiroz/letmeask-api/internal/infrastructure/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -83,7 +83,7 @@ func (repository *UserRepository) FindByID(userID string) (entities.User, error)
 
 	if err := result.Decode(&user); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return entities.User{}, infrastructure.NewResourceNotFoundError("usuário não encontrado")
+			return entities.User{}, domain.NewResourceNotFoundError("usuário não encontrado")
 		}
 		return entities.User{}, err
 	}
@@ -128,7 +128,7 @@ func (repository *UserRepository) Update(userID string, user entities.User) (ent
 
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return entities.User{}, infrastructure.NewResourceNotFoundError("usuário não encontrado")
+			return entities.User{}, domain.NewResourceNotFoundError("usuário não encontrado")
 		}
 		return entities.User{}, err
 	}
@@ -155,7 +155,7 @@ func (repository *UserRepository) UpdatePassword(userID string, password string)
 
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return infrastructure.NewResourceNotFoundError("usuário não encontrado")
+			return domain.NewResourceNotFoundError("usuário não encontrado")
 		}
 		return err
 	}
@@ -172,7 +172,7 @@ func (repository *UserRepository) FindByEmail(email string) (entities.User, erro
 
 	if err := result.Decode(&user); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return entities.User{}, infrastructure.NewResourceNotFoundError("usuário não encontrado")
+			return entities.User{}, domain.NewResourceNotFoundError("usuário não encontrado")
 		}
 		return entities.User{}, err
 	}
