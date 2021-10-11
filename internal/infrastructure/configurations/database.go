@@ -1,7 +1,9 @@
 package configurations
 
 type Database struct {
-	DBHost     string
-	DBPort     string
-	DBDatabase string
+	Host     string
+	Port     string
+	Database string
+	Username string
+	Password string
 }
