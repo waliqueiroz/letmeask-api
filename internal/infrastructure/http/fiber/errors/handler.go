@@ -2,7 +2,6 @@ package errors
 
 import (
 	"github.com/gofiber/fiber/v2"
-	application "github.com/waliqueiroz/letmeask-api/internal/application/errors"
 	domain "github.com/waliqueiroz/letmeask-api/internal/domain/errors"
 )
 
@@ -11,10 +10,8 @@ func Handler(ctx *fiber.Ctx, err error) error {
 	switch e := err.(type) {
 	case *fiber.Error:
 		return sendError(ctx, e.Code, e.Error())
-	case *domain.ResourceNotFoundError:
-		return sendError(ctx, fiber.StatusNotFound, e.Error())
-	case *application.UnauthorizedError:
-		return sendError(ctx, fiber.StatusUnauthorized, e.Error())
+	case domain.HTTPError:
+		return sendError(ctx, e.Code(), err.Error())
 	default:
 		return sendError(ctx, fiber.StatusInternalServerError, err.Error())
 	}

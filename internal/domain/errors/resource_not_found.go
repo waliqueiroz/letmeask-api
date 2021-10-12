@@ -1,6 +1,9 @@
 package errors
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 type ResourceNotFoundError struct {
 	Message string
@@ -22,4 +25,8 @@ func NewResourceNotFoundError(message ...string) *ResourceNotFoundError {
 
 func (err *ResourceNotFoundError) Error() string {
 	return err.Message
+}
+
+func (*ResourceNotFoundError) Code() int {
+	return http.StatusNotFound
 }

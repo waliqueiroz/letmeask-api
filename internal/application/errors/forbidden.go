@@ -1,6 +1,9 @@
 package errors
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 type ForbiddenError struct {
 	Message string
@@ -22,4 +25,8 @@ func NewForbiddenError(message ...string) *ForbiddenError {
 
 func (err *ForbiddenError) Error() string {
 	return err.Message
+}
+
+func (*ForbiddenError) Code() int {
+	return http.StatusForbidden
 }

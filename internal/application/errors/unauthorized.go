@@ -1,6 +1,9 @@
 package errors
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 type UnauthorizedError struct {
 	Message string
@@ -22,4 +25,8 @@ func NewUnauthorizedError(message ...string) *UnauthorizedError {
 
 func (err *UnauthorizedError) Error() string {
 	return err.Message
+}
+
+func (*UnauthorizedError) Code() int {
+	return http.StatusUnauthorized
 }
