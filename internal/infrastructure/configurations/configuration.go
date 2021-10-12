@@ -2,8 +2,6 @@ package configurations
 
 import (
 	"os"
-
-	"github.com/joho/godotenv"
 )
 
 type Configuration struct {
@@ -11,11 +9,7 @@ type Configuration struct {
 	Auth     Auth
 }
 
-func Load() (Configuration, error) {
-	if err := godotenv.Load(); err != nil {
-		return Configuration{}, err
-	}
-
+func Load() Configuration {
 	configuration := Configuration{
 		Database: Database{
 			Host:     os.Getenv("DB_HOST"),
@@ -29,5 +23,5 @@ func Load() (Configuration, error) {
 		},
 	}
 
-	return configuration, nil
+	return configuration
 }

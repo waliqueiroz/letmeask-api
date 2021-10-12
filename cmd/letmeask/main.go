@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/joho/godotenv"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/authentication/jwt"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations"
@@ -18,10 +19,11 @@ import (
 )
 
 func main() {
-	configuration, err := configurations.Load()
-	if err != nil {
+	if err := godotenv.Load(); err != nil {
 		log.Fatalln(err)
 	}
+
+	configuration := configurations.Load()
 
 	db, err := mongodb.Connect(configuration)
 	if err != nil {
