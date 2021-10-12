@@ -3,17 +3,20 @@ package controllers
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/waliqueiroz/letmeask-api/internal/application/dtos"
+	"github.com/waliqueiroz/letmeask-api/internal/application/providers"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
 )
 
 type RoomController struct {
-	roomService services.RoomService
+	roomService  services.RoomService
+	authProvider providers.AuthProvider
 }
 
-func NewRoomController(roomService services.RoomService) *RoomController {
+func NewRoomController(roomService services.RoomService, authProvider providers.AuthProvider) *RoomController {
 	return &RoomController{
 		roomService,
+		authProvider,
 	}
 }
 
@@ -36,7 +39,12 @@ func (controller *RoomController) Create(ctx *fiber.Ctx) error {
 func (controller *RoomController) EndRoom(ctx *fiber.Ctx) error {
 	roomID := ctx.Params("roomID")
 
-	room, err := controller.roomService.EndRoom(roomID)
+	userID, err := controller.authProvider.ExtractUserID(ctx.Locals("user"))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	room, err := controller.roomService.EndRoom(userID, roomID)
 	if err != nil {
 		return err
 	}
@@ -77,14 +85,19 @@ func (controller *RoomController) UpdateQuestion(ctx *fiber.Ctx) error {
 	roomID := ctx.Params("roomID")
 	questionID := ctx.Params("questionID")
 
+	userID, err := controller.authProvider.ExtractUserID(ctx.Locals("user"))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
 	var questionData dtos.UpdateQuestionDTO
 
-	err := ctx.BodyParser(&questionData)
+	err = ctx.BodyParser(&questionData)
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	room, err := controller.roomService.UpdateQuestion(roomID, questionID, questionData)
+	room, err := controller.roomService.UpdateQuestion(userID, roomID, questionID, questionData)
 	if err != nil {
 		return err
 	}
@@ -128,7 +141,12 @@ func (controller *RoomController) DeleteQuestion(ctx *fiber.Ctx) error {
 	roomID := ctx.Params("roomID")
 	questionID := ctx.Params("questionID")
 
-	room, err := controller.roomService.DeleteQuestion(roomID, questionID)
+	userID, err := controller.authProvider.ExtractUserID(ctx.Locals("user"))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	room, err := controller.roomService.DeleteQuestion(userID, roomID, questionID)
 	if err != nil {
 		return err
 	}

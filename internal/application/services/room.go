@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/waliqueiroz/letmeask-api/internal/application/dtos"
+	application "github.com/waliqueiroz/letmeask-api/internal/application/errors"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/repositories"
 )
@@ -11,12 +12,12 @@ import (
 type RoomService interface {
 	Create(room entities.Room) (entities.Room, error)
 	FindByID(roomID string) (entities.Room, error)
-	EndRoom(roomID string) (entities.Room, error)
+	EndRoom(userID string, roomID string) (entities.Room, error)
 	CreateQuestion(roomID string, question entities.Question) (entities.Room, error)
 	LikeQuestion(roomID string, questionID string, like entities.Like) (entities.Room, error)
 	DeslikeQuestion(roomID string, questionID string, likeID string) (entities.Room, error)
-	UpdateQuestion(roomID string, questionID string, questionData dtos.UpdateQuestionDTO) (entities.Room, error)
-	DeleteQuestion(roomID string, questionID string) (entities.Room, error)
+	UpdateQuestion(userID string, roomID string, questionID string, questionData dtos.UpdateQuestionDTO) (entities.Room, error)
+	DeleteQuestion(userID string, roomID string, questionID string) (entities.Room, error)
 }
 
 type roomService struct {
@@ -37,10 +38,14 @@ func (service *roomService) FindByID(roomID string) (entities.Room, error) {
 	return service.roomRepository.FindByID(roomID)
 }
 
-func (service *roomService) EndRoom(roomID string) (entities.Room, error) {
+func (service *roomService) EndRoom(userID string, roomID string) (entities.Room, error) {
 	room, err := service.roomRepository.FindByID(roomID)
 	if err != nil {
 		return entities.Room{}, err
+	}
+
+	if userID != room.Author.ID {
+		return entities.Room{}, application.NewForbiddenError("você não pode encerrar uma sala que não é sua.")
 	}
 
 	now := time.Now()
@@ -60,10 +65,14 @@ func (service *roomService) CreateQuestion(roomID string, question entities.Ques
 	return service.roomRepository.Update(roomID, room)
 }
 
-func (service *roomService) UpdateQuestion(roomID string, questionID string, questionData dtos.UpdateQuestionDTO) (entities.Room, error) {
+func (service *roomService) UpdateQuestion(userID string, roomID string, questionID string, questionData dtos.UpdateQuestionDTO) (entities.Room, error) {
 	room, err := service.roomRepository.FindByID(roomID)
 	if err != nil {
 		return entities.Room{}, err
+	}
+
+	if userID != room.Author.ID {
+		return entities.Room{}, application.NewForbiddenError("você não pode atualizar informações de uma sala que não é sua.")
 	}
 
 	if questionData.IsAnswered != nil {
@@ -105,10 +114,14 @@ func (service *roomService) DeslikeQuestion(roomID string, questionID string, li
 	return service.roomRepository.Update(roomID, room)
 }
 
-func (service *roomService) DeleteQuestion(roomID string, questionID string) (entities.Room, error) {
+func (service *roomService) DeleteQuestion(userID string, roomID string, questionID string) (entities.Room, error) {
 	room, err := service.roomRepository.FindByID(roomID)
 	if err != nil {
 		return entities.Room{}, err
+	}
+
+	if userID != room.Author.ID {
+		return entities.Room{}, application.NewForbiddenError("você não pode remover uma pergunta de uma sala que não é sua.")
 	}
 
 	room.DeleteQuestion(questionID)
