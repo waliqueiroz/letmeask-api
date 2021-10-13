@@ -16,6 +16,7 @@ import (
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/middlewares"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/routes"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/security/bcrypt"
+	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/validation/goplayground"
 )
 
 func main() {
@@ -32,13 +33,14 @@ func main() {
 
 	authProvider := jwt.NewJwtProvider(configuration)
 	securityProvider := bcrypt.NewBcryptProvider()
+	validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
 
 	userRepository := repositories.NewUserRepository(db)
 	userService := services.NewUserService(userRepository, securityProvider)
 	userController := controllers.NewUserController(userService)
 
 	authService := services.NewAuthService(userRepository, securityProvider, authProvider)
-	authController := controllers.NewAuthController(authService)
+	authController := controllers.NewAuthController(authService, validationProvider)
 
 	roomRepository := repositories.NewRoomRepository(db)
 	roomService := services.NewRoomService(roomRepository)
