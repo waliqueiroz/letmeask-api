@@ -3,17 +3,20 @@ package controllers
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/waliqueiroz/letmeask-api/internal/application/dtos"
+	"github.com/waliqueiroz/letmeask-api/internal/application/providers"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
 )
 
 type UserController struct {
-	userService services.UserService
+	userService        services.UserService
+	validationProvider providers.ValidationProvider
 }
 
-func NewUserController(userService services.UserService) *UserController {
+func NewUserController(userService services.UserService, validationProvider providers.ValidationProvider) *UserController {
 	return &UserController{
 		userService,
+		validationProvider,
 	}
 }
 
@@ -31,7 +34,12 @@ func (controller *UserController) Create(ctx *fiber.Ctx) error {
 
 	err := ctx.BodyParser(&user)
 	if err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	errors := controller.validationProvider.ValidateStruct(user)
+	if errors != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errors)
 	}
 
 	user, err = controller.userService.Create(user)

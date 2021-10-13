@@ -37,7 +37,7 @@ func main() {
 
 	userRepository := repositories.NewUserRepository(db)
 	userService := services.NewUserService(userRepository, securityProvider)
-	userController := controllers.NewUserController(userService)
+	userController := controllers.NewUserController(userService, validationProvider)
 
 	authService := services.NewAuthService(userRepository, securityProvider, authProvider)
 	authController := controllers.NewAuthController(authService, validationProvider)
