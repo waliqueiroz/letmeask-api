@@ -8,9 +8,9 @@ import (
 
 type Room struct {
 	ID        string     `json:"id"`
-	Title     string     `json:"title"`
+	Title     string     `json:"title" validate:"required"`
 	Questions []Question `json:"questions,omitempty"`
-	Author    Author     `json:"author"`
+	Author    Author     `json:"author" validate:"required"`
 	EndedAt   *time.Time `json:"ended_at,omitempty"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`

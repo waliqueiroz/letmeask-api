@@ -9,14 +9,16 @@ import (
 )
 
 type RoomController struct {
-	roomService  services.RoomService
-	authProvider providers.AuthProvider
+	roomService        services.RoomService
+	authProvider       providers.AuthProvider
+	validationProvider providers.ValidationProvider
 }
 
-func NewRoomController(roomService services.RoomService, authProvider providers.AuthProvider) *RoomController {
+func NewRoomController(roomService services.RoomService, authProvider providers.AuthProvider, validationProvider providers.ValidationProvider) *RoomController {
 	return &RoomController{
 		roomService,
 		authProvider,
+		validationProvider,
 	}
 }
 
@@ -26,6 +28,11 @@ func (controller *RoomController) Create(ctx *fiber.Ctx) error {
 	err := ctx.BodyParser(&room)
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	errors := controller.validationProvider.ValidateStruct(room)
+	if errors != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errors)
 	}
 
 	room, err = controller.roomService.Create(room)
@@ -73,6 +80,11 @@ func (controller *RoomController) CreateQuestion(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
+	errors := controller.validationProvider.ValidateStruct(question)
+	if errors != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errors)
+	}
+
 	room, err := controller.roomService.CreateQuestion(roomID, question)
 	if err != nil {
 		return err
@@ -97,6 +109,11 @@ func (controller *RoomController) UpdateQuestion(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
+	errors := controller.validationProvider.ValidateStruct(questionData)
+	if errors != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errors)
+	}
+
 	room, err := controller.roomService.UpdateQuestion(userID, roomID, questionID, questionData)
 	if err != nil {
 		return err
@@ -114,6 +131,11 @@ func (controller *RoomController) LikeQuestion(ctx *fiber.Ctx) error {
 	err := ctx.BodyParser(&like)
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	errors := controller.validationProvider.ValidateStruct(like)
+	if errors != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errors)
 	}
 
 	room, err := controller.roomService.LikeQuestion(roomID, questionID, like)

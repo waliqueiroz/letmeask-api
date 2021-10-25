@@ -4,10 +4,10 @@ import "time"
 
 type Question struct {
 	ID            string    `json:"id"`
-	Content       string    `json:"content"`
+	Content       string    `json:"content" validate:"required"`
 	IsHighlighted bool      `json:"is_highlighted"`
 	IsAnswered    bool      `json:"is_answered"`
-	Author        Author    `json:"author"`
+	Author        Author    `json:"author" validate:"dive"`
 	Likes         []Like    `json:"likes,omitempty"`
 	CreatedAt     time.Time `json:"created_at"`
 }

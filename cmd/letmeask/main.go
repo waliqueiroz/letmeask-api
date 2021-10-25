@@ -44,7 +44,7 @@ func main() {
 
 	roomRepository := repositories.NewRoomRepository(db)
 	roomService := services.NewRoomService(roomRepository)
-	roomController := controllers.NewRoomController(roomService, authProvider)
+	roomController := controllers.NewRoomController(roomService, authProvider, validationProvider)
 
 	authMiddleware := middlewares.NewAuthMiddleware(configuration)
 
