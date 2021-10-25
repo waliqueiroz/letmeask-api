@@ -120,6 +120,7 @@ func (repository *UserRepository) Update(userID string, user entities.User) (ent
 		"$set": bson.M{
 			"name":       user.Name,
 			"email":      user.Email,
+			"avatar":     user.Avatar,
 			"updated_at": time.Now(),
 		},
 	}

@@ -62,11 +62,16 @@ func (controller *UserController) FindByID(ctx *fiber.Ctx) error {
 }
 
 func (controller *UserController) Update(ctx *fiber.Ctx) error {
-	var user entities.User
+	var user dtos.UserDTO
 
 	err := ctx.BodyParser(&user)
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	errors := controller.validationProvider.ValidateStruct(user)
+	if errors != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errors)
 	}
 
 	userID := ctx.Params("userID")
@@ -96,6 +101,11 @@ func (controller *UserController) UpdatePassword(ctx *fiber.Ctx) error {
 	err := ctx.BodyParser(&password)
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+	}
+
+	errors := controller.validationProvider.ValidateStruct(password)
+	if errors != nil {
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errors)
 	}
 
 	userID := ctx.Params("userID")

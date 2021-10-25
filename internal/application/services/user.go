@@ -12,7 +12,7 @@ type UserService interface {
 	FindAll() ([]entities.User, error)
 	Create(user entities.User) (entities.User, error)
 	FindByID(userID string) (entities.User, error)
-	Update(userID string, user entities.User) (entities.User, error)
+	Update(userID string, userDTO dtos.UserDTO) (entities.User, error)
 	Delete(userID string) error
 	UpdatePassword(userID string, password dtos.PasswordDTO) error
 }
@@ -48,7 +48,13 @@ func (service *userService) FindByID(userID string) (entities.User, error) {
 	return service.userRepository.FindByID(userID)
 }
 
-func (service *userService) Update(userID string, user entities.User) (entities.User, error) {
+func (service *userService) Update(userID string, userDTO dtos.UserDTO) (entities.User, error) {
+	user := entities.User{
+		Name:   userDTO.Name,
+		Email:  userDTO.Email,
+		Avatar: userDTO.Avatar,
+	}
+
 	return service.userRepository.Update(userID, user)
 }
 
