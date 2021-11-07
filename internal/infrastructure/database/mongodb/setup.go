@@ -12,15 +12,14 @@ import (
 func Connect(configuration configurations.Configuration) (*mongo.Database, error) {
 	ctx := context.Background()
 
-	credential := options.Credential{
-		Username:      configuration.Database.Username,
-		Password:      configuration.Database.Password,
-		AuthMechanism: "SCRAM-SHA-1",
-	}
+	dbURI := fmt.Sprintf("mongodb://%s:%s@%s:%s",
+		configuration.Database.Username,
+		configuration.Database.Password,
+		configuration.Database.Host,
+		configuration.Database.Port,
+	)
 
-	dbURI := fmt.Sprintf("mongodb://%s:%s/", configuration.Database.Host, configuration.Database.Port)
-
-	clientOptions := options.Client().ApplyURI(dbURI).SetAuth(credential)
+	clientOptions := options.Client().ApplyURI(dbURI)
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
