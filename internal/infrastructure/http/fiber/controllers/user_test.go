@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -12,7 +13,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services/mocks"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
+	domain "github.com/waliqueiroz/letmeask-api/internal/domain/errors"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/controllers"
+	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/errors"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/routes"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/validation/goplayground"
 )
@@ -150,14 +153,91 @@ func TestCreateUser(t *testing.T) {
 
 			userServiceMock.AssertNumberOfCalls(t, "Create", test.expectedCreateCalls)
 
+			if response.StatusCode == fiber.StatusCreated {
+				body, _ := ioutil.ReadAll(response.Body)
+				var user entities.User
+				json.Unmarshal(body, &user)
+
+				assert.Equal(t, test.expectedCreateResult, user)
+			}
+		})
+	}
+
+}
+
+func TestFindUserByID(t *testing.T) {
+	userSerialized, _ := ioutil.ReadFile("../../../../../test/resources/user.json")
+
+	var user entities.User
+	json.Unmarshal(userSerialized, &user)
+
+	tests := []struct {
+		name                   string
+		userID                 string
+		expectedFindByIDResult entities.User
+		expectedFindByIDCalls  int
+		expectedFindByIDError  error
+		expectedStatusCode     int
+	}{
+		{
+			name:                   "Find user by ID",
+			userID:                 "6117e377b6e7bae09f52c483",
+			expectedFindByIDResult: user,
+			expectedFindByIDError:  nil,
+			expectedFindByIDCalls:  1,
+			expectedStatusCode:     fiber.StatusOK,
+		},
+		{
+			name:                   "User not found while finding by ID",
+			userID:                 "6117e377b6e7bae09f5333383",
+			expectedFindByIDResult: entities.User{},
+			expectedFindByIDError:  domain.NewResourceNotFoundError(),
+			expectedFindByIDCalls:  1,
+			expectedStatusCode:     fiber.StatusNotFound,
+		},
+		{
+			name:                   "Error finding user by ID",
+			userID:                 "6117e377b6e7bae09f52c483",
+			expectedFindByIDResult: entities.User{},
+			expectedFindByIDError:  assert.AnError,
+			expectedFindByIDCalls:  1,
+			expectedStatusCode:     fiber.StatusInternalServerError,
+		},
+	}
+
+	validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			userServiceMock := mocks.NewUserServiceMock()
+			userServiceMock.On("FindByID", test.userID).Return(test.expectedFindByIDResult, test.expectedFindByIDError)
+
+			userController := controllers.NewUserController(userServiceMock, validationProvider)
+
+			app := fiber.New(fiber.Config{
+				ErrorHandler: errors.Handler,
+			})
+
+			routes.SetupUserRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, userController)
+
+			route := strings.Replace(routes.FIND_USER_BY_ID_ROUTE, ":userID", test.userID, 1)
+
+			req := httptest.NewRequest(fiber.MethodGet, route, nil)
+			req.Header.Set("Content-Type", "application/json")
+
+			response, _ := app.Test(req)
+
+			assert.Equal(t, test.expectedStatusCode, response.StatusCode)
+
+			userServiceMock.AssertNumberOfCalls(t, "FindByID", test.expectedFindByIDCalls)
+
 			if response.StatusCode == fiber.StatusOK {
 				body, _ := ioutil.ReadAll(response.Body)
 				var user entities.User
 				json.Unmarshal(body, &user)
 
-				assert.Equal(t, test.expectedCreateCalls, user)
+				assert.Equal(t, test.expectedFindByIDResult, user)
 			}
 		})
 	}
-
 }
