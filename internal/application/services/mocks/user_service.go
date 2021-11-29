@@ -41,11 +41,11 @@ func (service *UserServiceMock) Update(userID string, userDTO dtos.UserDTO) (ent
 func (service *UserServiceMock) Delete(userID string) error {
 	args := service.Called(userID)
 
-	return args.Error(1)
+	return args.Error(0)
 }
 
 func (service *UserServiceMock) UpdatePassword(userID string, password dtos.PasswordDTO) error {
 	args := service.Called(userID, password)
 
-	return args.Error(1)
+	return args.Error(0)
 }

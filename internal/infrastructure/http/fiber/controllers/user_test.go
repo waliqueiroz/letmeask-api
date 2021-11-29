@@ -332,3 +332,56 @@ func TestUpdateUser(t *testing.T) {
 	}
 
 }
+
+func TestDeleteUser(t *testing.T) {
+	tests := []struct {
+		name                string
+		userID              string
+		expectedDeleteCalls int
+		expectedDeleteError error
+		expectedStatusCode  int
+	}{
+		{
+			name:                "Delete user",
+			userID:              "6117e377b6e7bae09f52c483",
+			expectedDeleteError: nil,
+			expectedDeleteCalls: 1,
+			expectedStatusCode:  fiber.StatusOK,
+		},
+		{
+			name:                "Error deleting user",
+			userID:              "6117e377b6e7bae09f52c483",
+			expectedDeleteError: assert.AnError,
+			expectedDeleteCalls: 1,
+			expectedStatusCode:  fiber.StatusInternalServerError,
+		},
+	}
+
+	validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			userServiceMock := mocks.NewUserServiceMock()
+			userServiceMock.On("Delete", test.userID).Return(test.expectedDeleteError)
+
+			userController := controllers.NewUserController(userServiceMock, validationProvider)
+
+			app := fiber.New(fiber.Config{
+				ErrorHandler: errors.Handler,
+			})
+
+			routes.SetupUserRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, userController)
+
+			route := strings.Replace(routes.DELETE_USER_ROUTE, ":userID", test.userID, 1)
+
+			req := httptest.NewRequest(fiber.MethodDelete, route, nil)
+			req.Header.Set("Content-Type", "application/json")
+
+			response, _ := app.Test(req)
+
+			assert.Equal(t, test.expectedStatusCode, response.StatusCode)
+
+			userServiceMock.AssertNumberOfCalls(t, "Delete", test.expectedDeleteCalls)
+		})
+	}
+}

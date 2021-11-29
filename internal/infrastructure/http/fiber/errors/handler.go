@@ -20,6 +20,6 @@ func Handler(ctx *fiber.Ctx, err error) error {
 
 func sendError(ctx *fiber.Ctx, statusCode int, message string) error {
 	return ctx.Status(statusCode).JSON(fiber.Map{
-		"error": message,
+		"message": message,
 	})
 }
