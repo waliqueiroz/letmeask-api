@@ -241,3 +241,94 @@ func TestFindUserByID(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateUser(t *testing.T) {
+	updateUserRequestSerialized, _ := ioutil.ReadFile("../../../../../test/resources/update_user_request.json")
+	createUserRequestIncompleteSerialized, _ := ioutil.ReadFile("../../../../../test/resources/update_user_request_incomplete.json")
+	userSerialized, _ := ioutil.ReadFile("../../../../../test/resources/user.json")
+
+	var user entities.User
+	json.Unmarshal(userSerialized, &user)
+
+	tests := []struct {
+		name                 string
+		userID               string
+		input                *bytes.Buffer
+		expectedUpdateResult entities.User
+		expectedUpdateCalls  int
+		expectedUpdateError  error
+		expectedStatusCode   int
+	}{
+		{
+			name:                 "Update user",
+			userID:               "6117e377b6e7bae09f52c483",
+			input:                bytes.NewBuffer(updateUserRequestSerialized),
+			expectedUpdateResult: user,
+			expectedUpdateError:  nil,
+			expectedUpdateCalls:  1,
+			expectedStatusCode:   fiber.StatusOK,
+		},
+		{
+			name:                 "Validation error while updating user",
+			userID:               "6117e377b6e7bae09f52c483",
+			input:                bytes.NewBuffer(createUserRequestIncompleteSerialized),
+			expectedUpdateResult: entities.User{},
+			expectedUpdateError:  nil,
+			expectedUpdateCalls:  0,
+			expectedStatusCode:   fiber.StatusUnprocessableEntity,
+		},
+		{
+			name:                 "Unmarshal error while creating user",
+			userID:               "6117e377b6e7bae09f52c483",
+			input:                bytes.NewBuffer(nil),
+			expectedUpdateResult: entities.User{},
+			expectedUpdateError:  nil,
+			expectedUpdateCalls:  0,
+			expectedStatusCode:   fiber.StatusBadRequest,
+		},
+		{
+			name:                 "Error while creating user",
+			userID:               "6117e377b6e7bae09f52c483",
+			input:                bytes.NewBuffer(updateUserRequestSerialized),
+			expectedUpdateResult: entities.User{},
+			expectedUpdateError:  assert.AnError,
+			expectedUpdateCalls:  1,
+			expectedStatusCode:   fiber.StatusInternalServerError,
+		},
+	}
+
+	validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			userServiceMock := mocks.NewUserServiceMock()
+			userServiceMock.On("Update", test.userID, mock.AnythingOfType("dtos.UserDTO")).Return(test.expectedUpdateResult, test.expectedUpdateError)
+
+			userController := controllers.NewUserController(userServiceMock, validationProvider)
+
+			app := fiber.New()
+
+			routes.SetupUserRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, userController)
+
+			route := strings.Replace(routes.UPDATE_USER_ROUTE, ":userID", test.userID, 1)
+
+			req := httptest.NewRequest(fiber.MethodPut, route, test.input)
+			req.Header.Set("Content-Type", "application/json")
+
+			response, _ := app.Test(req)
+
+			assert.Equal(t, test.expectedStatusCode, response.StatusCode)
+
+			userServiceMock.AssertNumberOfCalls(t, "Update", test.expectedUpdateCalls)
+
+			if response.StatusCode == fiber.StatusOK {
+				body, _ := ioutil.ReadAll(response.Body)
+				var user entities.User
+				json.Unmarshal(body, &user)
+
+				assert.Equal(t, test.expectedUpdateResult, user)
+			}
+		})
+	}
+
+}
