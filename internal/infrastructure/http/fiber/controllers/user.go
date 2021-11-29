@@ -9,11 +9,11 @@ import (
 )
 
 type UserController struct {
-	userService        services.UserService
-	validationProvider providers.ValidationProvider
+	userService services.UserService
+	validator   providers.Validator
 }
 
-func NewUserController(userService services.UserService, validationProvider providers.ValidationProvider) *UserController {
+func NewUserController(userService services.UserService, validationProvider providers.Validator) *UserController {
 	return &UserController{
 		userService,
 		validationProvider,
@@ -37,7 +37,7 @@ func (controller *UserController) Create(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	errors := controller.validationProvider.ValidateStruct(user)
+	errors := controller.validator.ValidateStruct(user)
 	if errors != nil {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errors)
 	}
@@ -69,7 +69,7 @@ func (controller *UserController) Update(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	errors := controller.validationProvider.ValidateStruct(user)
+	errors := controller.validator.ValidateStruct(user)
 	if errors != nil {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errors)
 	}
@@ -103,7 +103,7 @@ func (controller *UserController) UpdatePassword(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	errors := controller.validationProvider.ValidateStruct(password)
+	errors := controller.validator.ValidateStruct(password)
 	if errors != nil {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errors)
 	}

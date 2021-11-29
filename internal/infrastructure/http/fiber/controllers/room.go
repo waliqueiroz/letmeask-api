@@ -9,12 +9,12 @@ import (
 )
 
 type RoomController struct {
-	roomService        services.RoomService
-	authProvider       providers.AuthProvider
-	validationProvider providers.ValidationProvider
+	roomService   services.RoomService
+	authenticator providers.Authenticator
+	validator     providers.Validator
 }
 
-func NewRoomController(roomService services.RoomService, authProvider providers.AuthProvider, validationProvider providers.ValidationProvider) *RoomController {
+func NewRoomController(roomService services.RoomService, authProvider providers.Authenticator, validationProvider providers.Validator) *RoomController {
 	return &RoomController{
 		roomService,
 		authProvider,
@@ -30,7 +30,7 @@ func (controller *RoomController) Create(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	errors := controller.validationProvider.ValidateStruct(room)
+	errors := controller.validator.ValidateStruct(room)
 	if errors != nil {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errors)
 	}
@@ -46,7 +46,7 @@ func (controller *RoomController) Create(ctx *fiber.Ctx) error {
 func (controller *RoomController) EndRoom(ctx *fiber.Ctx) error {
 	roomID := ctx.Params("roomID")
 
-	userID, err := controller.authProvider.ExtractUserID(ctx.Locals("user"))
+	userID, err := controller.authenticator.ExtractUserID(ctx.Locals("user"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
@@ -80,7 +80,7 @@ func (controller *RoomController) CreateQuestion(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	errors := controller.validationProvider.ValidateStruct(question)
+	errors := controller.validator.ValidateStruct(question)
 	if errors != nil {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errors)
 	}
@@ -97,7 +97,7 @@ func (controller *RoomController) UpdateQuestion(ctx *fiber.Ctx) error {
 	roomID := ctx.Params("roomID")
 	questionID := ctx.Params("questionID")
 
-	userID, err := controller.authProvider.ExtractUserID(ctx.Locals("user"))
+	userID, err := controller.authenticator.ExtractUserID(ctx.Locals("user"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
@@ -109,7 +109,7 @@ func (controller *RoomController) UpdateQuestion(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	errors := controller.validationProvider.ValidateStruct(questionData)
+	errors := controller.validator.ValidateStruct(questionData)
 	if errors != nil {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errors)
 	}
@@ -133,7 +133,7 @@ func (controller *RoomController) LikeQuestion(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	errors := controller.validationProvider.ValidateStruct(like)
+	errors := controller.validator.ValidateStruct(like)
 	if errors != nil {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errors)
 	}
@@ -163,7 +163,7 @@ func (controller *RoomController) DeleteQuestion(ctx *fiber.Ctx) error {
 	roomID := ctx.Params("roomID")
 	questionID := ctx.Params("questionID")
 
-	userID, err := controller.authProvider.ExtractUserID(ctx.Locals("user"))
+	userID, err := controller.authenticator.ExtractUserID(ctx.Locals("user"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}

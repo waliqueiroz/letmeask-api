@@ -16,10 +16,10 @@ type AuthService interface {
 type authService struct {
 	userRepository   repositories.UserRepository
 	securityProvider providers.SecurityProvider
-	authProvider     providers.AuthProvider
+	authenticator    providers.Authenticator
 }
 
-func NewAuthService(userRepository repositories.UserRepository, securityProvider providers.SecurityProvider, authProvider providers.AuthProvider) *authService {
+func NewAuthService(userRepository repositories.UserRepository, securityProvider providers.SecurityProvider, authProvider providers.Authenticator) *authService {
 	return &authService{
 		userRepository,
 		securityProvider,
@@ -39,7 +39,7 @@ func (service *authService) Login(credentials dtos.CredentialsDTO) (dtos.AuthDTO
 
 	expiresIn := time.Now().Add(time.Hour * 6).Unix()
 
-	token, err := service.authProvider.CreateToken(user.ID, expiresIn)
+	token, err := service.authenticator.CreateToken(user.ID, expiresIn)
 	if err != nil {
 		return dtos.AuthDTO{}, err
 	}

@@ -8,11 +8,11 @@ import (
 )
 
 type AuthController struct {
-	authService        services.AuthService
-	validationProvider providers.ValidationProvider
+	authService services.AuthService
+	validator   providers.Validator
 }
 
-func NewAuthController(authService services.AuthService, validationProvider providers.ValidationProvider) *AuthController {
+func NewAuthController(authService services.AuthService, validationProvider providers.Validator) *AuthController {
 	return &AuthController{
 		authService,
 		validationProvider,
@@ -27,7 +27,7 @@ func (controller *AuthController) Login(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	errors := controller.validationProvider.ValidateStruct(credentials)
+	errors := controller.validator.ValidateStruct(credentials)
 	if errors != nil {
 		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(errors)
 	}
