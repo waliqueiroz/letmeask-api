@@ -100,7 +100,7 @@ func (controller *UserController) UpdatePassword(ctx *fiber.Ctx) error {
 
 	err := ctx.BodyParser(&password)
 	if err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	errors := controller.validationProvider.ValidateStruct(password)

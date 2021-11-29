@@ -84,10 +84,10 @@ func TestUserIndex(t *testing.T) {
 func TestCreateUser(t *testing.T) {
 	createUserRequestSerialized, _ := ioutil.ReadFile("../../../../../test/resources/create_user_request.json")
 	createUserRequestIncompleteSerialized, _ := ioutil.ReadFile("../../../../../test/resources/create_user_request_incomplete.json")
-	userSerialized, _ := ioutil.ReadFile("../../../../../test/resources/user.json")
+	createdUserSerialized, _ := ioutil.ReadFile("../../../../../test/resources/user.json")
 
-	var user entities.User
-	json.Unmarshal(userSerialized, &user)
+	var createdUser entities.User
+	json.Unmarshal(createdUserSerialized, &createdUser)
 
 	tests := []struct {
 		name                 string
@@ -100,7 +100,7 @@ func TestCreateUser(t *testing.T) {
 		{
 			name:                 "Create user",
 			input:                bytes.NewBuffer(createUserRequestSerialized),
-			expectedCreateResult: user,
+			expectedCreateResult: createdUser,
 			expectedCreateError:  nil,
 			expectedCreateCalls:  1,
 			expectedStatusCode:   fiber.StatusCreated,
@@ -244,11 +244,11 @@ func TestFindUserByID(t *testing.T) {
 
 func TestUpdateUser(t *testing.T) {
 	updateUserRequestSerialized, _ := ioutil.ReadFile("../../../../../test/resources/update_user_request.json")
-	createUserRequestIncompleteSerialized, _ := ioutil.ReadFile("../../../../../test/resources/update_user_request_incomplete.json")
-	userSerialized, _ := ioutil.ReadFile("../../../../../test/resources/user.json")
+	updateUserRequestIncompleteSerialized, _ := ioutil.ReadFile("../../../../../test/resources/update_user_request_incomplete.json")
+	updatedUserSerialized, _ := ioutil.ReadFile("../../../../../test/resources/user.json")
 
-	var user entities.User
-	json.Unmarshal(userSerialized, &user)
+	var updatedUser entities.User
+	json.Unmarshal(updatedUserSerialized, &updatedUser)
 
 	tests := []struct {
 		name                 string
@@ -263,7 +263,7 @@ func TestUpdateUser(t *testing.T) {
 			name:                 "Update user",
 			userID:               "6117e377b6e7bae09f52c483",
 			input:                bytes.NewBuffer(updateUserRequestSerialized),
-			expectedUpdateResult: user,
+			expectedUpdateResult: updatedUser,
 			expectedUpdateError:  nil,
 			expectedUpdateCalls:  1,
 			expectedStatusCode:   fiber.StatusOK,
@@ -271,14 +271,14 @@ func TestUpdateUser(t *testing.T) {
 		{
 			name:                 "Validation error while updating user",
 			userID:               "6117e377b6e7bae09f52c483",
-			input:                bytes.NewBuffer(createUserRequestIncompleteSerialized),
+			input:                bytes.NewBuffer(updateUserRequestIncompleteSerialized),
 			expectedUpdateResult: entities.User{},
 			expectedUpdateError:  nil,
 			expectedUpdateCalls:  0,
 			expectedStatusCode:   fiber.StatusUnprocessableEntity,
 		},
 		{
-			name:                 "Unmarshal error while creating user",
+			name:                 "Unmarshal error while updating user",
 			userID:               "6117e377b6e7bae09f52c483",
 			input:                bytes.NewBuffer(nil),
 			expectedUpdateResult: entities.User{},
@@ -287,7 +287,7 @@ func TestUpdateUser(t *testing.T) {
 			expectedStatusCode:   fiber.StatusBadRequest,
 		},
 		{
-			name:                 "Error while creating user",
+			name:                 "Error while updating user",
 			userID:               "6117e377b6e7bae09f52c483",
 			input:                bytes.NewBuffer(updateUserRequestSerialized),
 			expectedUpdateResult: entities.User{},
@@ -384,4 +384,78 @@ func TestDeleteUser(t *testing.T) {
 			userServiceMock.AssertNumberOfCalls(t, "Delete", test.expectedDeleteCalls)
 		})
 	}
+}
+
+func TestUpdateUserPassword(t *testing.T) {
+	updatePasswordRequestSerialized, _ := ioutil.ReadFile("../../../../../test/resources/update_password_request.json")
+	updatePasswordRequestIncompleteSerialized, _ := ioutil.ReadFile("../../../../../test/resources/update_password_request_incomplete.json")
+
+	tests := []struct {
+		name                        string
+		userID                      string
+		input                       *bytes.Buffer
+		expectedUpdatePasswordCalls int
+		expectedUpdatePasswordError error
+		expectedStatusCode          int
+	}{
+		{
+			name:                        "Update user password",
+			userID:                      "6117e377b6e7bae09f52c483",
+			input:                       bytes.NewBuffer(updatePasswordRequestSerialized),
+			expectedUpdatePasswordError: nil,
+			expectedUpdatePasswordCalls: 1,
+			expectedStatusCode:          fiber.StatusOK,
+		},
+		{
+			name:                        "Validation error while updating user password ",
+			userID:                      "6117e377b6e7bae09f52c483",
+			input:                       bytes.NewBuffer(updatePasswordRequestIncompleteSerialized),
+			expectedUpdatePasswordError: nil,
+			expectedUpdatePasswordCalls: 0,
+			expectedStatusCode:          fiber.StatusUnprocessableEntity,
+		},
+		{
+			name:                        "Unmarshal error while updating user password",
+			userID:                      "6117e377b6e7bae09f52c483",
+			input:                       bytes.NewBuffer(nil),
+			expectedUpdatePasswordError: nil,
+			expectedUpdatePasswordCalls: 0,
+			expectedStatusCode:          fiber.StatusBadRequest,
+		},
+		{
+			name:                        "Error while updating user password",
+			userID:                      "6117e377b6e7bae09f52c483",
+			input:                       bytes.NewBuffer(updatePasswordRequestSerialized),
+			expectedUpdatePasswordError: assert.AnError,
+			expectedUpdatePasswordCalls: 1,
+			expectedStatusCode:          fiber.StatusInternalServerError,
+		},
+	}
+
+	validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			userServiceMock := mocks.NewUserServiceMock()
+			userServiceMock.On("UpdatePassword", test.userID, mock.AnythingOfType("dtos.PasswordDTO")).Return(test.expectedUpdatePasswordError)
+
+			userController := controllers.NewUserController(userServiceMock, validationProvider)
+
+			app := fiber.New()
+
+			routes.SetupUserRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, userController)
+
+			route := strings.Replace(routes.UPDATE_USER_PASSWORD_ROUTE, ":userID", test.userID, 1)
+
+			req := httptest.NewRequest(fiber.MethodPost, route, test.input)
+			req.Header.Set("Content-Type", "application/json")
+
+			response, _ := app.Test(req)
+
+			assert.Equal(t, test.expectedStatusCode, response.StatusCode)
+
+			userServiceMock.AssertNumberOfCalls(t, "UpdatePassword", test.expectedUpdatePasswordCalls)
+		})
+	}
+
 }
