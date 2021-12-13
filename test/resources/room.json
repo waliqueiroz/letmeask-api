@@ -1,0 +1,11 @@
+{
+    "id": "61769231c3e60c7dd40baf8f",
+    "title": "Sala Teste",
+    "author": {
+        "id": "61641b096beb85adb0e5d297",
+        "name": "João",
+        "avatar": "https://teste.com/test.jpg"
+    },
+    "created_at": "2021-10-25T11:17:05.755Z",
+    "updated_at": "2021-10-25T11:17:05.755Z"
+}

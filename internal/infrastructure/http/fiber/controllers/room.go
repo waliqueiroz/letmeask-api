@@ -27,7 +27,7 @@ func (controller *RoomController) Create(ctx *fiber.Ctx) error {
 
 	err := ctx.BodyParser(&room)
 	if err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	errors := controller.validator.ValidateStruct(room)
