@@ -24,6 +24,7 @@ var _ = Describe("Auth", func() {
 		var input *bytes.Buffer
 		var response *http.Response
 		var authServicemock *mocks.AuthServiceMock
+		var expectedLoginResult dtos.AuthDTO
 
 		JustBeforeEach(func() {
 			var err error
@@ -54,7 +55,6 @@ var _ = Describe("Auth", func() {
 				authSerialized, err := ioutil.ReadFile("../../../../../test/resources/auth.json")
 				Expect(err).NotTo(HaveOccurred())
 
-				var expectedLoginResult dtos.AuthDTO
 				err = json.Unmarshal(authSerialized, &expectedLoginResult)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -64,6 +64,19 @@ var _ = Describe("Auth", func() {
 
 			It("response status code should be 200 OK", func() {
 				Expect(response.StatusCode).To(Equal(fiber.StatusOK))
+			})
+
+			It("authServicemock.Login should be called once", func() {
+				Expect(authServicemock.AssertNumberOfCalls(GinkgoT(), "Login", 1)).To(BeTrue())
+			})
+
+			It("response body should be equal to authServicemock.Login result", func() {
+				body, _ := ioutil.ReadAll(response.Body)
+				var auth dtos.AuthDTO
+				err := json.Unmarshal(body, &auth)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(auth).To(Equal(expectedLoginResult))
 			})
 		})
 	})
