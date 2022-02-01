@@ -71,9 +71,11 @@ var _ = Describe("Auth", func() {
 			})
 
 			It("response body should be equal to authServicemock.Login result", func() {
-				body, _ := ioutil.ReadAll(response.Body)
+				body, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
 				var auth dtos.AuthDTO
-				err := json.Unmarshal(body, &auth)
+				err = json.Unmarshal(body, &auth)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(auth).To(Equal(expectedLoginResult))
