@@ -10,6 +10,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.18.0
 	github.com/gofiber/jwt/v2 v2.2.4
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/golang/mock v1.6.0
 	github.com/joho/godotenv v1.3.0
 	github.com/onsi/ginkgo/v2 v2.1.0
 	github.com/onsi/gomega v1.18.0

@@ -8,9 +8,9 @@ import (
 	"net/http/httptest"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/stretchr/testify/mock"
 	"github.com/waliqueiroz/letmeask-api/internal/application/dtos"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services/mocks"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/controllers"
@@ -23,14 +23,15 @@ var _ = Describe("Auth", func() {
 	Describe("Performing login", func() {
 		var input *bytes.Buffer
 		var response *http.Response
-		var authServicemock *mocks.AuthServiceMock
+		var mockAuthService *mocks.MockAuthService
 		var expectedLoginResult dtos.AuthDTO
+		var mockCtrl *gomock.Controller
 
 		JustBeforeEach(func() {
 			var err error
 			validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
 
-			authController := controllers.NewAuthController(authServicemock, validationProvider)
+			authController := controllers.NewAuthController(mockAuthService, validationProvider)
 
 			app := fiber.New()
 
@@ -45,32 +46,34 @@ var _ = Describe("Auth", func() {
 
 		When("login is performed with success", func() {
 			BeforeEach(func() {
-				// Entrada
 				credentialsSerialized, err := ioutil.ReadFile("../../../../../test/resources/credentials.json")
 				Expect(err).NotTo(HaveOccurred())
 
-				input = bytes.NewBuffer(credentialsSerialized)
-
-				// Mocks
 				authSerialized, err := ioutil.ReadFile("../../../../../test/resources/auth.json")
 				Expect(err).NotTo(HaveOccurred())
 
+				// Entrada
+				input = bytes.NewBuffer(credentialsSerialized)
+
+				// Mocks
 				err = json.Unmarshal(authSerialized, &expectedLoginResult)
 				Expect(err).NotTo(HaveOccurred())
 
-				authServicemock = mocks.NewAuthServiceMock()
-				authServicemock.On("Login", mock.AnythingOfType("dtos.CredentialsDTO")).Return(expectedLoginResult, nil)
+				var credentialsDTO dtos.CredentialsDTO
+				err = json.Unmarshal(credentialsSerialized, &credentialsDTO)
+				Expect(err).NotTo(HaveOccurred())
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockAuthService = mocks.NewMockAuthService(mockCtrl)
+				mockAuthService.EXPECT().Login(credentialsDTO).Return(expectedLoginResult, nil).Times(1)
 			})
 
 			It("response status code should be 200 OK", func() {
 				Expect(response.StatusCode).To(Equal(fiber.StatusOK))
 			})
 
-			It("authServicemock.Login should be called once", func() {
-				Expect(authServicemock.AssertNumberOfCalls(GinkgoT(), "Login", 1)).To(BeTrue())
-			})
-
-			It("response body should be equal to authServicemock.Login result", func() {
+			It("response body should be equal to authService.Login result", func() {
 				body, err := ioutil.ReadAll(response.Body)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -79,6 +82,10 @@ var _ = Describe("Auth", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(auth).To(Equal(expectedLoginResult))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
 			})
 		})
 	})
