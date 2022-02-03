@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services/mocks"
@@ -22,11 +20,7 @@ import (
 )
 
 func TestCreateRoom(t *testing.T) {
-	if err := godotenv.Load("../../../../../.env"); err != nil {
-		log.Fatalln(err)
-	}
-
-	configuration := configurations.Load()
+	configuration := configurations.NewConfiguration("../../../../../")
 
 	createRoomRequestSerialized, _ := ioutil.ReadFile("../../../../../test/resources/create_room_request.json")
 	createRoomRequestIncompleteSerialized, _ := ioutil.ReadFile("../../../../../test/resources/create_room_request_incomplete.json")
