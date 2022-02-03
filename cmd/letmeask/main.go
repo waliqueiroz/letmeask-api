@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/authentication/jwt"
-	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations"
+	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations/viper"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/database/mongodb"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/database/mongodb/repositories"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/controllers"
@@ -19,7 +19,8 @@ import (
 )
 
 func main() {
-	configuration := configurations.NewConfiguration(".")
+	viperProvider := viper.NewViperProvider()
+	configuration := viperProvider.LoadConfiguration(".")
 
 	db, err := mongodb.Connect(configuration)
 	if err != nil {
