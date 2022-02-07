@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -82,6 +83,79 @@ var _ = Describe("Auth", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(auth).To(Equal(expectedLoginResult))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("login general error occurs", func() {
+			BeforeEach(func() {
+				credentialsSerialized, err := ioutil.ReadFile("../../../../../test/resources/credentials.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				// Entrada
+				input = bytes.NewBuffer(credentialsSerialized)
+
+				// Mocks
+				var credentialsDTO dtos.CredentialsDTO
+				err = json.Unmarshal(credentialsSerialized, &credentialsDTO)
+				Expect(err).NotTo(HaveOccurred())
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockAuthService = mocks.NewMockAuthService(mockCtrl)
+				mockAuthService.EXPECT().Login(credentialsDTO).Return(dtos.AuthDTO{}, errors.New("an error")).Times(1)
+			})
+
+			It("response status code should be 500 Internal Server Error", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusInternalServerError))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("user tries to login with incomplete credentials", func() {
+			BeforeEach(func() {
+				incompleteCredentialsSerialized, err := ioutil.ReadFile("../../../../../test/resources/incomplete_credentials.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				// Entrada
+				input = bytes.NewBuffer(incompleteCredentialsSerialized)
+
+				// Mocks
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockAuthService = mocks.NewMockAuthService(mockCtrl)
+				mockAuthService.EXPECT().Login(dtos.CredentialsDTO{}).Return(dtos.AuthDTO{}, nil).Times(0)
+			})
+
+			It("response status code should be 422 Unprocessable Entity", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusUnprocessableEntity))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("request body comes with an invalid payload", func() {
+			BeforeEach(func() {
+				// Entrada
+				input = bytes.NewBuffer(nil)
+
+				// Mocks
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockAuthService = mocks.NewMockAuthService(mockCtrl)
+				mockAuthService.EXPECT().Login(dtos.CredentialsDTO{}).Return(dtos.AuthDTO{}, nil).Times(0)
+			})
+
+			It("response status code should be 400 Bad Request", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusBadRequest))
 			})
 
 			AfterEach(func() {
