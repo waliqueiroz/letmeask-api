@@ -25,7 +25,6 @@ var _ = Describe("Auth", func() {
 		var input *bytes.Buffer
 		var response *http.Response
 		var mockAuthService *mocks.MockAuthService
-		var expectedLoginResult dtos.AuthDTO
 		var mockCtrl *gomock.Controller
 
 		JustBeforeEach(func() {
@@ -46,6 +45,8 @@ var _ = Describe("Auth", func() {
 		})
 
 		When("login is performed with success", func() {
+			var expectedLoginResult dtos.AuthDTO
+
 			BeforeEach(func() {
 				credentialsSerialized, err := ioutil.ReadFile("../../../../../test/resources/credentials.json")
 				Expect(err).NotTo(HaveOccurred())
@@ -81,7 +82,6 @@ var _ = Describe("Auth", func() {
 				var auth dtos.AuthDTO
 				err = json.Unmarshal(body, &auth)
 				Expect(err).NotTo(HaveOccurred())
-
 				Expect(auth).To(Equal(expectedLoginResult))
 			})
 
@@ -130,7 +130,7 @@ var _ = Describe("Auth", func() {
 				mockCtrl = gomock.NewController(GinkgoT())
 
 				mockAuthService = mocks.NewMockAuthService(mockCtrl)
-				mockAuthService.EXPECT().Login(dtos.CredentialsDTO{}).Return(dtos.AuthDTO{}, nil).Times(0)
+				mockAuthService.EXPECT().Login(gomock.Any()).Return(dtos.AuthDTO{}, nil).Times(0)
 			})
 
 			It("response status code should be 422 Unprocessable Entity", func() {
@@ -151,7 +151,7 @@ var _ = Describe("Auth", func() {
 				mockCtrl = gomock.NewController(GinkgoT())
 
 				mockAuthService = mocks.NewMockAuthService(mockCtrl)
-				mockAuthService.EXPECT().Login(dtos.CredentialsDTO{}).Return(dtos.AuthDTO{}, nil).Times(0)
+				mockAuthService.EXPECT().Login(gomock.Any()).Return(dtos.AuthDTO{}, nil).Times(0)
 			})
 
 			It("response status code should be 400 Bad Request", func() {
