@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang/mock/gomock"
@@ -15,7 +16,9 @@ import (
 
 	"github.com/waliqueiroz/letmeask-api/internal/application/services/mocks"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
+	domain "github.com/waliqueiroz/letmeask-api/internal/domain/errors"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/controllers"
+	infrastructure "github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/errors"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/routes"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/validation/goplayground"
 )
@@ -249,5 +252,121 @@ var _ = Describe("User", func() {
 				mockCtrl.Finish()
 			})
 		})
+	})
+
+	Describe("Finding users by ID", func() {
+		var userID string
+		var response *http.Response
+		var mockCtrl *gomock.Controller
+		var userController *controllers.UserController
+
+		JustBeforeEach(func() {
+			var err error
+
+			app := fiber.New(fiber.Config{
+				ErrorHandler: infrastructure.Handler,
+			})
+
+			routes.SetupUserRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, userController)
+
+			route := strings.Replace(routes.FIND_USER_BY_ID_ROUTE, ":userID", userID, 1)
+
+			req := httptest.NewRequest(fiber.MethodGet, route, nil)
+
+			response, err = app.Test(req)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		When("find user by ID with success", func() {
+			var expectedFindByIDResult entities.User
+
+			BeforeEach(func() {
+				userSerialized, err := ioutil.ReadFile("../../../../../test/resources/user.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(userSerialized, &expectedFindByIDResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				userID = expectedFindByIDResult.ID
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+
+				mockUserService.EXPECT().FindByID(userID).Return(expectedFindByIDResult, nil).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 200 OK", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusOK))
+			})
+
+			It("response body should be equal to userService.FindByID result", func() {
+				body, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
+				var user entities.User
+				err = json.Unmarshal(body, &user)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(user).To(Equal(expectedFindByIDResult))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("user not found while finding by ID", func() {
+			BeforeEach(func() {
+				userID = "6117e377b6e7bae09f5399983"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+
+				mockUserService.EXPECT().FindByID(userID).Return(entities.User{}, domain.NewResourceNotFoundError()).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 404 Not Found", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusNotFound))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("an error occurs while finding user by ID", func() {
+			BeforeEach(func() {
+				userID = "6117e377b6e7bae09f5399983"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+
+				mockUserService.EXPECT().FindByID(userID).Return(entities.User{}, errors.New("an error")).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 500 Internal Server Error", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusInternalServerError))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
 	})
 })
