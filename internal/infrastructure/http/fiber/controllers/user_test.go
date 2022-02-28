@@ -219,5 +219,35 @@ var _ = Describe("User", func() {
 				mockCtrl.Finish()
 			})
 		})
+
+		When("a general error occurs while creating user", func() {
+			BeforeEach(func() {
+				createUserRequestSerialized, err := ioutil.ReadFile("../../../../../test/resources/create_user_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				input = bytes.NewBuffer(createUserRequestSerialized)
+
+				var user entities.User
+				err = json.Unmarshal(createUserRequestSerialized, &user)
+				Expect(err).NotTo(HaveOccurred())
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+				mockUserService.EXPECT().Create(user).Return(entities.User{}, errors.New("an error")).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 500 Internal Server Error", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusInternalServerError))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
 	})
 })
