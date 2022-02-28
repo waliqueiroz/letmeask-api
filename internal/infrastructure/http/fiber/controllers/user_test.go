@@ -185,7 +185,6 @@ var _ = Describe("User", func() {
 				mockCtrl = gomock.NewController(GinkgoT())
 
 				mockUserService := mocks.NewMockUserService(mockCtrl)
-				mockUserService.EXPECT().Create(gomock.Any()).Return(entities.User{}, nil).Times(0)
 
 				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
 
@@ -208,7 +207,6 @@ var _ = Describe("User", func() {
 				mockCtrl = gomock.NewController(GinkgoT())
 
 				mockUserService := mocks.NewMockUserService(mockCtrl)
-				mockUserService.EXPECT().Create(gomock.Any()).Return(entities.User{}, nil).Times(0)
 
 				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
 
@@ -459,8 +457,6 @@ var _ = Describe("User", func() {
 				mockCtrl = gomock.NewController(GinkgoT())
 
 				mockUserService := mocks.NewMockUserService(mockCtrl)
-
-				mockUserService.EXPECT().Update(userID, updateUserRequest).Return(entities.User{}, nil).Times(0)
 
 				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
 

@@ -135,7 +135,6 @@ var _ = Describe("Auth", func() {
 				mockCtrl = gomock.NewController(GinkgoT())
 
 				mockAuthService := mocks.NewMockAuthService(mockCtrl)
-				mockAuthService.EXPECT().Login(gomock.Any()).Return(dtos.AuthDTO{}, nil).Times(0)
 
 				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
 
@@ -160,7 +159,6 @@ var _ = Describe("Auth", func() {
 				mockCtrl = gomock.NewController(GinkgoT())
 
 				mockAuthService := mocks.NewMockAuthService(mockCtrl)
-				mockAuthService.EXPECT().Login(gomock.Any()).Return(dtos.AuthDTO{}, nil).Times(0)
 
 				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
 
