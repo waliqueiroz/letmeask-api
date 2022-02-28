@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/waliqueiroz/letmeask-api/internal/application/dtos"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services/mocks"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
 	domain "github.com/waliqueiroz/letmeask-api/internal/domain/errors"
@@ -368,5 +369,166 @@ var _ = Describe("User", func() {
 			})
 		})
 
+	})
+
+	Describe("Updating users", func() {
+		var userID string
+		var input *bytes.Buffer
+		var response *http.Response
+		var mockCtrl *gomock.Controller
+		var userController *controllers.UserController
+
+		JustBeforeEach(func() {
+			var err error
+
+			app := fiber.New()
+
+			routes.SetupUserRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, userController)
+			route := strings.Replace(routes.UPDATE_USER_ROUTE, ":userID", userID, 1)
+
+			req := httptest.NewRequest(fiber.MethodPut, route, input)
+			req.Header.Set("Content-Type", "application/json")
+
+			response, err = app.Test(req)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		When("update user with success", func() {
+			var expectedUpdateResult entities.User
+
+			BeforeEach(func() {
+				updateUserRequestSerialized, err := ioutil.ReadFile("../../../../../test/resources/update_user_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				updatedUserSerialized, err := ioutil.ReadFile("../../../../../test/resources/user.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(updatedUserSerialized, &expectedUpdateResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				var updateUserRequest dtos.UserDTO
+				err = json.Unmarshal(updateUserRequestSerialized, &updateUserRequest)
+				Expect(err).NotTo(HaveOccurred())
+
+				userID = expectedUpdateResult.ID
+				input = bytes.NewBuffer(updateUserRequestSerialized)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+
+				mockUserService.EXPECT().Update(userID, updateUserRequest).Return(expectedUpdateResult, nil).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 200 OK", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusOK))
+			})
+
+			It("response body should be equal to userService.Update result", func() {
+				body, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
+				var user entities.User
+				err = json.Unmarshal(body, &user)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(user).To(Equal(expectedUpdateResult))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("validation fails while updating user", func() {
+			BeforeEach(func() {
+				updateUserRequestIncompleteSerialized, err := ioutil.ReadFile("../../../../../test/resources/update_user_request_incomplete.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				var updateUserRequest dtos.UserDTO
+				err = json.Unmarshal(updateUserRequestIncompleteSerialized, &updateUserRequest)
+				Expect(err).NotTo(HaveOccurred())
+
+				userID = "6117e377b6e7bae09f52c483"
+				input = bytes.NewBuffer(updateUserRequestIncompleteSerialized)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+
+				mockUserService.EXPECT().Update(userID, updateUserRequest).Return(entities.User{}, nil).Times(0)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 422 Unprocessable Entity", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusUnprocessableEntity))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("request body comes with an invalid payload", func() {
+			BeforeEach(func() {
+				userID = "6117e377b6e7bae09f52c483"
+				input = bytes.NewBuffer(nil)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 400 Bad Request", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusBadRequest))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("an error occurs while updating user", func() {
+			BeforeEach(func() {
+				updateUserRequestSerialized, err := ioutil.ReadFile("../../../../../test/resources/update_user_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				var updateUserRequest dtos.UserDTO
+				err = json.Unmarshal(updateUserRequestSerialized, &updateUserRequest)
+				Expect(err).NotTo(HaveOccurred())
+
+				userID = "6117e377b6e7bae09f52c483"
+				input = bytes.NewBuffer(updateUserRequestSerialized)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+
+				mockUserService.EXPECT().Update(userID, updateUserRequest).Return(entities.User{}, errors.New("an error")).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 500 Internal Server Error", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusInternalServerError))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
 	})
 })
