@@ -23,13 +23,10 @@ var _ = Describe("User", func() {
 	Describe("Finding all users", func() {
 		var response *http.Response
 		var mockCtrl *gomock.Controller
-		var mockUserService *mocks.MockUserService
+		var userController *controllers.UserController
 
 		JustBeforeEach(func() {
 			var err error
-			validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
-
-			userController := controllers.NewUserController(mockUserService, validationProvider)
 
 			app := fiber.New()
 
@@ -53,8 +50,12 @@ var _ = Describe("User", func() {
 
 				mockCtrl = gomock.NewController(GinkgoT())
 
-				mockUserService = mocks.NewMockUserService(mockCtrl)
+				mockUserService := mocks.NewMockUserService(mockCtrl)
 				mockUserService.EXPECT().FindAll().Return(expectedFindAllResult, nil).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
 			})
 
 			It("response status code should be 200 OK", func() {

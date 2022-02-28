@@ -24,14 +24,11 @@ var _ = Describe("Auth", func() {
 	Describe("Performing login", func() {
 		var input *bytes.Buffer
 		var response *http.Response
-		var mockAuthService *mocks.MockAuthService
+		var authController *controllers.AuthController
 		var mockCtrl *gomock.Controller
 
 		JustBeforeEach(func() {
 			var err error
-			validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
-
-			authController := controllers.NewAuthController(mockAuthService, validationProvider)
 
 			app := fiber.New()
 
@@ -67,8 +64,12 @@ var _ = Describe("Auth", func() {
 
 				mockCtrl = gomock.NewController(GinkgoT())
 
-				mockAuthService = mocks.NewMockAuthService(mockCtrl)
+				mockAuthService := mocks.NewMockAuthService(mockCtrl)
 				mockAuthService.EXPECT().Login(credentialsDTO).Return(expectedLoginResult, nil).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				authController = controllers.NewAuthController(mockAuthService, validationProvider)
 			})
 
 			It("response status code should be 200 OK", func() {
@@ -105,8 +106,12 @@ var _ = Describe("Auth", func() {
 
 				mockCtrl = gomock.NewController(GinkgoT())
 
-				mockAuthService = mocks.NewMockAuthService(mockCtrl)
+				mockAuthService := mocks.NewMockAuthService(mockCtrl)
 				mockAuthService.EXPECT().Login(credentialsDTO).Return(dtos.AuthDTO{}, errors.New("an error")).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				authController = controllers.NewAuthController(mockAuthService, validationProvider)
 			})
 
 			It("response status code should be 500 Internal Server Error", func() {
@@ -129,8 +134,12 @@ var _ = Describe("Auth", func() {
 				// Mocks
 				mockCtrl = gomock.NewController(GinkgoT())
 
-				mockAuthService = mocks.NewMockAuthService(mockCtrl)
+				mockAuthService := mocks.NewMockAuthService(mockCtrl)
 				mockAuthService.EXPECT().Login(gomock.Any()).Return(dtos.AuthDTO{}, nil).Times(0)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				authController = controllers.NewAuthController(mockAuthService, validationProvider)
 			})
 
 			It("response status code should be 422 Unprocessable Entity", func() {
@@ -150,8 +159,12 @@ var _ = Describe("Auth", func() {
 				// Mocks
 				mockCtrl = gomock.NewController(GinkgoT())
 
-				mockAuthService = mocks.NewMockAuthService(mockCtrl)
+				mockAuthService := mocks.NewMockAuthService(mockCtrl)
 				mockAuthService.EXPECT().Login(gomock.Any()).Return(dtos.AuthDTO{}, nil).Times(0)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				authController = controllers.NewAuthController(mockAuthService, validationProvider)
 			})
 
 			It("response status code should be 400 Bad Request", func() {
