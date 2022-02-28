@@ -13,15 +13,15 @@ import (
 	"github.com/waliqueiroz/letmeask-api/internal/application/services/mocks"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/authentication/jwt"
-	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations/viper"
+	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations/env"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/controllers"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/routes"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/validation/goplayground"
 )
 
 func TestCreateRoom(t *testing.T) {
-	viperProvider := viper.NewViperProvider()
-	configuration := viperProvider.LoadConfiguration("../../../../../")
+	envProvider := env.NewEnvProvider()
+	configuration := envProvider.LoadConfigurationFromFile("../../../../../.env.test")
 
 	createRoomRequestSerialized, _ := ioutil.ReadFile("../../../../../test/resources/create_room_request.json")
 	createRoomRequestIncompleteSerialized, _ := ioutil.ReadFile("../../../../../test/resources/create_room_request_incomplete.json")
