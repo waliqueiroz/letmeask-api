@@ -3,106 +3,186 @@ package controllers_test
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
-	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	"github.com/golang/mock/gomock"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	"github.com/waliqueiroz/letmeask-api/internal/application/services/mocks"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/authentication/jwt"
+	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations/env"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/controllers"
+	infrastructure "github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/errors"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/routes"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/validation/goplayground"
 )
 
-func TestCreateRoom(t *testing.T) {
-	envProvider := env.NewEnvProvider()
-	configuration := envProvider.LoadConfigurationFromFile("../../../../../.env.test")
+var _ = Describe("Room", func() {
+	var configuration configurations.Configuration
 
-	createRoomRequestSerialized, _ := ioutil.ReadFile("../../../../../test/resources/create_room_request.json")
-	createRoomRequestIncompleteSerialized, _ := ioutil.ReadFile("../../../../../test/resources/create_room_request_incomplete.json")
-	roomSerialized, _ := ioutil.ReadFile("../../../../../test/resources/room.json")
+	BeforeEach(func() {
+		envProvider := env.NewEnvProvider()
+		configuration = envProvider.LoadConfigurationFromFile("../../../../../.env.test")
+	})
 
-	var room entities.Room
-	json.Unmarshal(roomSerialized, &room)
+	Describe("Create room", func() {
+		var input *bytes.Buffer
+		var response *http.Response
+		var mockCtrl *gomock.Controller
+		var roomController *controllers.RoomController
 
-	tests := []struct {
-		name                 string
-		input                *bytes.Buffer
-		expectedCreateResult entities.Room
-		expectedCreateCalls  int
-		expectedCreateError  error
-		expectedStatusCode   int
-	}{
-		{
-			name:                 "Create room",
-			input:                bytes.NewBuffer(createRoomRequestSerialized),
-			expectedCreateResult: room,
-			expectedCreateCalls:  1,
-			expectedCreateError:  nil,
-			expectedStatusCode:   fiber.StatusCreated,
-		},
-		{
-			name:                 "Try to create room with incomplete data",
-			input:                bytes.NewBuffer(createRoomRequestIncompleteSerialized),
-			expectedCreateResult: entities.Room{},
-			expectedCreateCalls:  0,
-			expectedCreateError:  nil,
-			expectedStatusCode:   fiber.StatusUnprocessableEntity,
-		},
-		{
-			name:                 "Try to create room with invalid data",
-			input:                bytes.NewBuffer(nil),
-			expectedCreateResult: entities.Room{},
-			expectedCreateCalls:  0,
-			expectedCreateError:  nil,
-			expectedStatusCode:   fiber.StatusBadRequest,
-		},
-		{
-			name:                 "Error creating room",
-			input:                bytes.NewBuffer(createRoomRequestSerialized),
-			expectedCreateResult: entities.Room{},
-			expectedCreateCalls:  1,
-			expectedCreateError:  assert.AnError,
-			expectedStatusCode:   fiber.StatusInternalServerError,
-		},
-	}
+		JustBeforeEach(func() {
+			var err error
 
-	validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
-	authProvider := jwt.NewJwtProvider(configuration)
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			roomServiceMock := mocks.NewRoomServiceMock()
-			roomServiceMock.On("Create", mock.AnythingOfType("entities.Room")).Return(test.expectedCreateResult, test.expectedCreateError)
-
-			roomController := controllers.NewRoomController(roomServiceMock, authProvider, validationProvider)
-
-			app := fiber.New()
+			app := fiber.New(fiber.Config{
+				ErrorHandler: infrastructure.Handler,
+			})
 
 			routes.SetupRoomRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, roomController)
 
-			req := httptest.NewRequest(fiber.MethodPost, routes.CREATE_ROOM_ROUTE, test.input)
+			req := httptest.NewRequest(fiber.MethodPost, routes.CREATE_ROOM_ROUTE, input)
 			req.Header.Set("Content-Type", "application/json")
 
-			response, _ := app.Test(req)
-
-			assert.Equal(t, test.expectedStatusCode, response.StatusCode)
-
-			roomServiceMock.AssertNumberOfCalls(t, "Create", test.expectedCreateCalls)
-
-			if response.StatusCode == fiber.StatusCreated {
-				body, _ := ioutil.ReadAll(response.Body)
-				var room entities.Room
-				json.Unmarshal(body, &room)
-
-				assert.Equal(t, test.expectedCreateResult, room)
-			}
+			response, err = app.Test(req)
+			Expect(err).NotTo(HaveOccurred())
 		})
-	}
 
-}
+		When("create room with success", func() {
+			var expectedCreateResult entities.Room
+
+			BeforeEach(func() {
+				createRoomRequestSerialized, err := ioutil.ReadFile("../../../../../test/resources/create_room_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				roomSerialized, err := ioutil.ReadFile("../../../../../test/resources/room.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(roomSerialized, &expectedCreateResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				var room entities.Room
+				err = json.Unmarshal(createRoomRequestSerialized, &room)
+				Expect(err).NotTo(HaveOccurred())
+
+				input = bytes.NewBuffer(createRoomRequestSerialized)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockRoomService := mocks.NewMockRoomService(mockCtrl)
+				mockRoomService.EXPECT().Create(room).Return(expectedCreateResult, nil).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+				authProvider := jwt.NewJwtProvider(configuration)
+
+				roomController = controllers.NewRoomController(mockRoomService, authProvider, validationProvider)
+			})
+
+			It("response status code should be equal to 201 Created", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusCreated))
+			})
+
+			It("response body should be equal to roomService.Create result", func() {
+				body, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
+				var room entities.Room
+				err = json.Unmarshal(body, &room)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(room).To(Equal(expectedCreateResult))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("validation fails while creating room", func() {
+			BeforeEach(func() {
+				createRoomRequestIncompleteSerialized, err := ioutil.ReadFile("../../../../../test/resources/create_room_request_incomplete.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				input = bytes.NewBuffer(createRoomRequestIncompleteSerialized)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockRoomService := mocks.NewMockRoomService(mockCtrl)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+				authProvider := jwt.NewJwtProvider(configuration)
+
+				roomController = controllers.NewRoomController(mockRoomService, authProvider, validationProvider)
+			})
+
+			It("response status code should be equal to 422 Unprocessable Entity", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusUnprocessableEntity))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("request body comes with an invalid payload", func() {
+			BeforeEach(func() {
+				input = bytes.NewBuffer(nil)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockRoomService := mocks.NewMockRoomService(mockCtrl)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+				authProvider := jwt.NewJwtProvider(configuration)
+
+				roomController = controllers.NewRoomController(mockRoomService, authProvider, validationProvider)
+			})
+
+			It("response status code should be equal to 400 Bad Request", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusBadRequest))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("a general error occurs while creating user", func() {
+			BeforeEach(func() {
+				createRoomRequestSerialized, err := ioutil.ReadFile("../../../../../test/resources/create_room_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				var room entities.Room
+				err = json.Unmarshal(createRoomRequestSerialized, &room)
+				Expect(err).NotTo(HaveOccurred())
+
+				input = bytes.NewBuffer(createRoomRequestSerialized)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockRoomService := mocks.NewMockRoomService(mockCtrl)
+				mockRoomService.EXPECT().Create(room).Return(entities.Room{}, errors.New("an error")).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+				authProvider := jwt.NewJwtProvider(configuration)
+
+				roomController = controllers.NewRoomController(mockRoomService, authProvider, validationProvider)
+			})
+
+			It("response status code should be equal to 500 Internal Server Error", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusInternalServerError))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+	})
+
+})
