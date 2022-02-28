@@ -15,6 +15,7 @@ import (
 	"github.com/waliqueiroz/letmeask-api/internal/application/dtos"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services/mocks"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/controllers"
+	infrastructure "github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/errors"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/routes"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/validation/goplayground"
 )
@@ -30,7 +31,9 @@ var _ = Describe("Auth", func() {
 		JustBeforeEach(func() {
 			var err error
 
-			app := fiber.New()
+			app := fiber.New(fiber.Config{
+				ErrorHandler: infrastructure.Handler,
+			})
 
 			routes.SetupAuthRoutes(app, authController)
 

@@ -34,7 +34,9 @@ var _ = Describe("User", func() {
 		JustBeforeEach(func() {
 			var err error
 
-			app := fiber.New()
+			app := fiber.New(fiber.Config{
+				ErrorHandler: infrastructure.Handler,
+			})
 
 			routes.SetupUserRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, userController)
 
@@ -115,7 +117,9 @@ var _ = Describe("User", func() {
 		JustBeforeEach(func() {
 			var err error
 
-			app := fiber.New()
+			app := fiber.New(fiber.Config{
+				ErrorHandler: infrastructure.Handler,
+			})
 
 			routes.SetupUserRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, userController)
 
@@ -379,7 +383,9 @@ var _ = Describe("User", func() {
 		JustBeforeEach(func() {
 			var err error
 
-			app := fiber.New()
+			app := fiber.New(fiber.Config{
+				ErrorHandler: infrastructure.Handler,
+			})
 
 			routes.SetupUserRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, userController)
 			route := strings.Replace(routes.UPDATE_USER_ROUTE, ":userID", userID, 1)
@@ -537,7 +543,9 @@ var _ = Describe("User", func() {
 		JustBeforeEach(func() {
 			var err error
 
-			app := fiber.New()
+			app := fiber.New(fiber.Config{
+				ErrorHandler: infrastructure.Handler,
+			})
 
 			routes.SetupUserRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, userController)
 			route := strings.Replace(routes.DELETE_USER_ROUTE, ":userID", userID, 1)
@@ -607,7 +615,9 @@ var _ = Describe("User", func() {
 		JustBeforeEach(func() {
 			var err error
 
-			app := fiber.New()
+			app := fiber.New(fiber.Config{
+				ErrorHandler: infrastructure.Handler,
+			})
 
 			routes.SetupUserRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, userController)
 			route := strings.Replace(routes.UPDATE_USER_PASSWORD_ROUTE, ":userID", userID, 1)
