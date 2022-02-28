@@ -171,5 +171,30 @@ var _ = Describe("User", func() {
 			})
 		})
 
+		When("validation fails while creating user", func() {
+			BeforeEach(func() {
+				createUserRequestIncompleteSerialized, err := ioutil.ReadFile("../../../../../test/resources/create_user_request_incomplete.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				input = bytes.NewBuffer(createUserRequestIncompleteSerialized)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+				mockUserService.EXPECT().Create(gomock.Any()).Return(entities.User{}, nil).Times(0)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 422 Unprocessable Entity", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusUnprocessableEntity))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
 	})
 })
