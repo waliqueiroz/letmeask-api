@@ -196,5 +196,28 @@ var _ = Describe("User", func() {
 				mockCtrl.Finish()
 			})
 		})
+
+		When("request body comes with an invalid payload", func() {
+			BeforeEach(func() {
+				input = bytes.NewBuffer(nil)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+				mockUserService.EXPECT().Create(gomock.Any()).Return(entities.User{}, nil).Times(0)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 400 Bad Request", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusBadRequest))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
 	})
 })
