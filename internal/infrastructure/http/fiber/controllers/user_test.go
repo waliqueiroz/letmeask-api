@@ -596,4 +596,144 @@ var _ = Describe("User", func() {
 			})
 		})
 	})
+
+	Describe("Updating user password", func() {
+		var userID string
+		var input *bytes.Buffer
+		var response *http.Response
+		var mockCtrl *gomock.Controller
+		var userController *controllers.UserController
+
+		JustBeforeEach(func() {
+			var err error
+
+			app := fiber.New()
+
+			routes.SetupUserRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, userController)
+			route := strings.Replace(routes.UPDATE_USER_PASSWORD_ROUTE, ":userID", userID, 1)
+
+			req := httptest.NewRequest(fiber.MethodPost, route, input)
+			req.Header.Set("Content-Type", "application/json")
+
+			response, err = app.Test(req)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		When("update user password with success", func() {
+			BeforeEach(func() {
+				updatePasswordRequestSerialized, err := ioutil.ReadFile("../../../../../test/resources/update_password_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				var updatePasswordRequest dtos.PasswordDTO
+				err = json.Unmarshal(updatePasswordRequestSerialized, &updatePasswordRequest)
+				Expect(err).NotTo(HaveOccurred())
+
+				userID = "6117e377b6e7bae09f52c483"
+				input = bytes.NewBuffer(updatePasswordRequestSerialized)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+
+				mockUserService.EXPECT().UpdatePassword(userID, updatePasswordRequest).Return(nil).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 200 OK", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusOK))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("validation fails while updating user password", func() {
+			BeforeEach(func() {
+				updatePasswordRequestIncompleteSerialized, err := ioutil.ReadFile("../../../../../test/resources/update_password_request_incomplete.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				var updatePasswordRequest dtos.PasswordDTO
+				err = json.Unmarshal(updatePasswordRequestIncompleteSerialized, &updatePasswordRequest)
+				Expect(err).NotTo(HaveOccurred())
+
+				userID = "6117e377b6e7bae09f52c483"
+				input = bytes.NewBuffer(updatePasswordRequestIncompleteSerialized)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 422 Unprocessable Entity", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusUnprocessableEntity))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("request body comes with an invalid payload", func() {
+			BeforeEach(func() {
+				userID = "6117e377b6e7bae09f52c483"
+				input = bytes.NewBuffer(nil)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 400 Bad Request", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusBadRequest))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("an error occurs while updating user", func() {
+			BeforeEach(func() {
+				updatePasswordRequestSerialized, err := ioutil.ReadFile("../../../../../test/resources/update_password_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				var updatePasswordRequest dtos.PasswordDTO
+				err = json.Unmarshal(updatePasswordRequestSerialized, &updatePasswordRequest)
+				Expect(err).NotTo(HaveOccurred())
+
+				userID = "6117e377b6e7bae09f52c483"
+				input = bytes.NewBuffer(updatePasswordRequestSerialized)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+
+				mockUserService.EXPECT().UpdatePassword(userID, updatePasswordRequest).Return(errors.New("an error")).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 500 Internal Server Error", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusInternalServerError))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+	})
 })
