@@ -1,6 +1,7 @@
 package controllers_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -99,5 +100,76 @@ var _ = Describe("User", func() {
 				mockCtrl.Finish()
 			})
 		})
+	})
+
+	Describe("Creating users", func() {
+		var input *bytes.Buffer
+		var response *http.Response
+		var mockCtrl *gomock.Controller
+		var userController *controllers.UserController
+
+		JustBeforeEach(func() {
+			var err error
+
+			app := fiber.New()
+
+			routes.SetupUserRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, userController)
+
+			req := httptest.NewRequest(fiber.MethodPost, routes.CREATE_USER_ROUTE, input)
+			req.Header.Set("Content-Type", "application/json")
+
+			response, err = app.Test(req)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		When("create user with success", func() {
+			var expectedCreateResult entities.User
+
+			BeforeEach(func() {
+				createUserRequestSerialized, err := ioutil.ReadFile("../../../../../test/resources/create_user_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				createdUserSerialized, err := ioutil.ReadFile("../../../../../test/resources/user.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				input = bytes.NewBuffer(createUserRequestSerialized)
+
+				err = json.Unmarshal(createdUserSerialized, &expectedCreateResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				var user entities.User
+				err = json.Unmarshal(createUserRequestSerialized, &user)
+				Expect(err).NotTo(HaveOccurred())
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+				mockUserService.EXPECT().Create(user).Return(expectedCreateResult, nil).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 201 Created", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusCreated))
+			})
+
+			It("response body should be equal to userService.Create result", func() {
+				body, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
+				var user entities.User
+				err = json.Unmarshal(body, &user)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(user).To(Equal(expectedCreateResult))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
 	})
 })
