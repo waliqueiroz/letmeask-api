@@ -527,4 +527,73 @@ var _ = Describe("User", func() {
 			})
 		})
 	})
+
+	Describe("Deleting users", func() {
+		var userID string
+		var response *http.Response
+		var mockCtrl *gomock.Controller
+		var userController *controllers.UserController
+
+		JustBeforeEach(func() {
+			var err error
+
+			app := fiber.New()
+
+			routes.SetupUserRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, userController)
+			route := strings.Replace(routes.DELETE_USER_ROUTE, ":userID", userID, 1)
+
+			req := httptest.NewRequest(fiber.MethodDelete, route, nil)
+
+			response, err = app.Test(req)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		When("delete user with success", func() {
+			BeforeEach(func() {
+				userID = "6117e377b6e7bae09f52c483"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+
+				mockUserService.EXPECT().Delete(userID).Return(nil).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 200 OK", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusOK))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("an error occurs while deleting user", func() {
+			BeforeEach(func() {
+				userID = "6117e377b6e7bae09f52c483"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserService := mocks.NewMockUserService(mockCtrl)
+
+				mockUserService.EXPECT().Delete(userID).Return(errors.New("an error")).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				userController = controllers.NewUserController(mockUserService, validationProvider)
+			})
+
+			It("response status code should be 500 Internal Server Error", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusInternalServerError))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+	})
 })
