@@ -303,4 +303,97 @@ var _ = Describe("Room", func() {
 		})
 	})
 
+	Describe("Finding a room by ID", func() {
+		var roomID string
+		var response *http.Response
+		var mockCtrl *gomock.Controller
+		var roomController *controllers.RoomController
+
+		JustBeforeEach(func() {
+			var err error
+
+			app := fiber.New(fiber.Config{
+				ErrorHandler: infrastructure.Handler,
+			})
+
+			routes.SetupRoomRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, roomController)
+
+			route := strings.Replace(routes.FIND_ROOM_BY_ID_ROUTE, ":roomID", roomID, 1)
+
+			req := httptest.NewRequest(fiber.MethodGet, route, nil)
+
+			response, err = app.Test(req)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		When("find a room by ID with success", func() {
+			var expectedFindByIDResult entities.Room
+
+			BeforeEach(func() {
+				roomWithQuestionsSerialized, err := ioutil.ReadFile("../../../../../test/resources/room_with_questions.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(roomWithQuestionsSerialized, &expectedFindByIDResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				roomID = "621f5ec1e07fdbb81c8221f7"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
+
+				mockRoomService := mocks.NewMockRoomService(mockCtrl)
+				mockRoomService.EXPECT().FindByID(roomID).Return(expectedFindByIDResult, nil).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
+			})
+
+			It("response status code should be equal to 200 OK", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusOK))
+			})
+
+			It("response body should be equal to roomService.FindByID result", func() {
+				body, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
+				var room entities.Room
+				err = json.Unmarshal(body, &room)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(room).To(Equal(expectedFindByIDResult))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("a general error occurs while finding a room by ID", func() {
+			BeforeEach(func() {
+				roomID = "621f5ec1e07fdbb81c8221f7"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
+
+				mockRoomService := mocks.NewMockRoomService(mockCtrl)
+				mockRoomService.EXPECT().FindByID(roomID).Return(entities.Room{}, errors.New("an error")).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
+			})
+
+			It("response status code should be equal to 500 Internal Server Error", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusInternalServerError))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+	})
+
 })
