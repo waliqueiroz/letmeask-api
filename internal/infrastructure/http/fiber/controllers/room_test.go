@@ -267,8 +267,8 @@ var _ = Describe("Room", func() {
 				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
 			})
 
-			It("response status code should be equal to 400 Bad Request", func() {
-				Expect(response.StatusCode).To(Equal(fiber.StatusBadRequest))
+			It("response status code should be equal to 401 Unauthorized", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusUnauthorized))
 			})
 
 			AfterEach(func() {
@@ -784,8 +784,8 @@ var _ = Describe("Room", func() {
 				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
 			})
 
-			It("response status code should be equal to 400 Bad Request", func() {
-				Expect(response.StatusCode).To(Equal(fiber.StatusBadRequest))
+			It("response status code should be equal to 401 Unauthorized", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusUnauthorized))
 			})
 
 			AfterEach(func() {

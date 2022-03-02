@@ -48,7 +48,7 @@ func (controller *RoomController) EndRoom(ctx *fiber.Ctx) error {
 
 	userID, err := controller.authenticator.ExtractUserID(ctx.Locals("user"))
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 	}
 
 	room, err := controller.roomService.EndRoom(userID, roomID)
@@ -99,7 +99,7 @@ func (controller *RoomController) UpdateQuestion(ctx *fiber.Ctx) error {
 
 	userID, err := controller.authenticator.ExtractUserID(ctx.Locals("user"))
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 	}
 
 	var questionData dtos.UpdateQuestionDTO
@@ -165,7 +165,7 @@ func (controller *RoomController) DeleteQuestion(ctx *fiber.Ctx) error {
 
 	userID, err := controller.authenticator.ExtractUserID(ctx.Locals("user"))
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 	}
 
 	room, err := controller.roomService.DeleteQuestion(userID, roomID, questionID)
