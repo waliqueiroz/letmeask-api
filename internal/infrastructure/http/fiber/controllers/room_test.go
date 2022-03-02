@@ -16,10 +16,7 @@ import (
 
 	"github.com/waliqueiroz/letmeask-api/internal/application/services/mocks"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
-	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/authentication/jwt"
 	authMocks "github.com/waliqueiroz/letmeask-api/internal/infrastructure/authentication/mocks"
-	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations"
-	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations/env"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/controllers"
 	infrastructure "github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/errors"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/routes"
@@ -27,13 +24,6 @@ import (
 )
 
 var _ = Describe("Room", func() {
-	var configuration configurations.Configuration
-
-	BeforeEach(func() {
-		envProvider := env.NewEnvProvider()
-		configuration = envProvider.LoadConfigurationFromFile("../../../../../.env.test")
-	})
-
 	Describe("Creating a room", func() {
 		var input *bytes.Buffer
 		var response *http.Response
@@ -77,13 +67,14 @@ var _ = Describe("Room", func() {
 
 				mockCtrl = gomock.NewController(GinkgoT())
 
+				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
+
 				mockRoomService := mocks.NewMockRoomService(mockCtrl)
 				mockRoomService.EXPECT().Create(room).Return(expectedCreateResult, nil).Times(1)
 
 				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
-				authProvider := jwt.NewJwtProvider(configuration)
 
-				roomController = controllers.NewRoomController(mockRoomService, authProvider, validationProvider)
+				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
 			})
 
 			It("response status code should be equal to 201 Created", func() {
@@ -115,12 +106,13 @@ var _ = Describe("Room", func() {
 
 				mockCtrl = gomock.NewController(GinkgoT())
 
+				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
+
 				mockRoomService := mocks.NewMockRoomService(mockCtrl)
 
 				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
-				authProvider := jwt.NewJwtProvider(configuration)
 
-				roomController = controllers.NewRoomController(mockRoomService, authProvider, validationProvider)
+				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
 			})
 
 			It("response status code should be equal to 422 Unprocessable Entity", func() {
@@ -138,12 +130,13 @@ var _ = Describe("Room", func() {
 
 				mockCtrl = gomock.NewController(GinkgoT())
 
+				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
+
 				mockRoomService := mocks.NewMockRoomService(mockCtrl)
 
 				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
-				authProvider := jwt.NewJwtProvider(configuration)
 
-				roomController = controllers.NewRoomController(mockRoomService, authProvider, validationProvider)
+				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
 			})
 
 			It("response status code should be equal to 400 Bad Request", func() {
@@ -168,13 +161,14 @@ var _ = Describe("Room", func() {
 
 				mockCtrl = gomock.NewController(GinkgoT())
 
+				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
+
 				mockRoomService := mocks.NewMockRoomService(mockCtrl)
 				mockRoomService.EXPECT().Create(room).Return(entities.Room{}, errors.New("an error")).Times(1)
 
 				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
-				authProvider := jwt.NewJwtProvider(configuration)
 
-				roomController = controllers.NewRoomController(mockRoomService, authProvider, validationProvider)
+				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
 			})
 
 			It("response status code should be equal to 500 Internal Server Error", func() {
