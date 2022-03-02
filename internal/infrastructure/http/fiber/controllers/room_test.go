@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang/mock/gomock"
@@ -16,6 +17,7 @@ import (
 	"github.com/waliqueiroz/letmeask-api/internal/application/services/mocks"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/authentication/jwt"
+	authMocks "github.com/waliqueiroz/letmeask-api/internal/infrastructure/authentication/mocks"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/configurations/env"
 	"github.com/waliqueiroz/letmeask-api/internal/infrastructure/http/fiber/controllers"
@@ -32,7 +34,7 @@ var _ = Describe("Room", func() {
 		configuration = envProvider.LoadConfigurationFromFile("../../../../../.env.test")
 	})
 
-	Describe("Create room", func() {
+	Describe("Creating a room", func() {
 		var input *bytes.Buffer
 		var response *http.Response
 		var mockCtrl *gomock.Controller
@@ -173,6 +175,128 @@ var _ = Describe("Room", func() {
 				authProvider := jwt.NewJwtProvider(configuration)
 
 				roomController = controllers.NewRoomController(mockRoomService, authProvider, validationProvider)
+			})
+
+			It("response status code should be equal to 500 Internal Server Error", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusInternalServerError))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+	})
+
+	Describe("Ending a room", func() {
+		var roomID string
+		var response *http.Response
+		var mockCtrl *gomock.Controller
+		var roomController *controllers.RoomController
+
+		JustBeforeEach(func() {
+			var err error
+
+			app := fiber.New(fiber.Config{
+				ErrorHandler: infrastructure.Handler,
+			})
+
+			routes.SetupRoomRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, roomController)
+
+			route := strings.Replace(routes.END_ROOM_ROUTE, ":roomID", roomID, 1)
+
+			req := httptest.NewRequest(fiber.MethodDelete, route, nil)
+
+			response, err = app.Test(req)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		When("end room with success", func() {
+			var expectedEndRoomResult entities.Room
+
+			BeforeEach(func() {
+				endedRoomSerialized, err := ioutil.ReadFile("../../../../../test/resources/ended_room.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(endedRoomSerialized, &expectedEndRoomResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				userID := "6117e377b6e7bae09f5399983"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
+				mockAuthenticator.EXPECT().ExtractUserID(gomock.Any()).Return(userID, nil).Times(1)
+
+				mockRoomService := mocks.NewMockRoomService(mockCtrl)
+				mockRoomService.EXPECT().EndRoom(userID, roomID).Return(expectedEndRoomResult, nil).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
+			})
+
+			It("response status code should be equal to 200 OK", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusOK))
+			})
+
+			It("response body should be equal to roomService.EndRoom result", func() {
+				body, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
+				var room entities.Room
+				err = json.Unmarshal(body, &room)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(room).To(Equal(expectedEndRoomResult))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("an error occurs while extracting user ID", func() {
+			BeforeEach(func() {
+				roomID = "621f5ec1e07fdbb81c8221f7"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
+				mockAuthenticator.EXPECT().ExtractUserID(gomock.Any()).Return("", errors.New("an error")).Times(1)
+
+				mockRoomService := mocks.NewMockRoomService(mockCtrl)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
+			})
+
+			It("response status code should be equal to 400 Bad Request", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusBadRequest))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("an general error occurs while ending room", func() {
+			BeforeEach(func() {
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				userID := "6117e377b6e7bae09f5399983"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
+				mockAuthenticator.EXPECT().ExtractUserID(gomock.Any()).Return(userID, nil).Times(1)
+
+				mockRoomService := mocks.NewMockRoomService(mockCtrl)
+				mockRoomService.EXPECT().EndRoom(userID, roomID).Return(entities.Room{}, errors.New("an error")).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
 			})
 
 			It("response status code should be equal to 500 Internal Server Error", func() {
