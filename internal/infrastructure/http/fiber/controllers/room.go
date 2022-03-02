@@ -130,7 +130,7 @@ func (controller *RoomController) LikeQuestion(ctx *fiber.Ctx) error {
 
 	err := ctx.BodyParser(&like)
 	if err != nil {
-		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	errors := controller.validator.ValidateStruct(like)
