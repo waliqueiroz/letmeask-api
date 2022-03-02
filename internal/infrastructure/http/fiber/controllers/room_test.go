@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/waliqueiroz/letmeask-api/internal/application/dtos"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services/mocks"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
 	authMocks "github.com/waliqueiroz/letmeask-api/internal/infrastructure/authentication/mocks"
@@ -215,7 +216,7 @@ var _ = Describe("Room", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				roomID = "621f5ec1e07fdbb81c8221f7"
-				userID := "6117e377b6e7bae09f5399983"
+				userID := "621f5e02e07fdbb81c8221f5"
 
 				mockCtrl = gomock.NewController(GinkgoT())
 
@@ -278,7 +279,7 @@ var _ = Describe("Room", func() {
 		When("an general error occurs while ending room", func() {
 			BeforeEach(func() {
 				roomID = "621f5ec1e07fdbb81c8221f7"
-				userID := "6117e377b6e7bae09f5399983"
+				userID := "621f5e02e07fdbb81c8221f5"
 
 				mockCtrl = gomock.NewController(GinkgoT())
 
@@ -548,6 +549,272 @@ var _ = Describe("Room", func() {
 
 				mockRoomService := mocks.NewMockRoomService(mockCtrl)
 				mockRoomService.EXPECT().CreateQuestion(roomID, question).Return(entities.Room{}, errors.New("an error")).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
+			})
+
+			It("response status code should be equal to 500 Internal Server Error", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusInternalServerError))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+	})
+
+	Describe("Updating a question", func() {
+		var roomID string
+		var questionID string
+		var input *bytes.Buffer
+		var response *http.Response
+		var mockCtrl *gomock.Controller
+		var roomController *controllers.RoomController
+
+		JustBeforeEach(func() {
+			var err error
+
+			app := fiber.New(fiber.Config{
+				ErrorHandler: infrastructure.Handler,
+			})
+
+			routes.SetupRoomRoutes(app, func(c *fiber.Ctx) error { return c.Next() }, roomController)
+
+			route := strings.Replace(routes.UPDATE_QUESTION_ROUTE, ":roomID", roomID, 1)
+			route = strings.Replace(route, ":questionID", questionID, 1)
+
+			req := httptest.NewRequest(fiber.MethodPatch, route, input)
+			req.Header.Set("Content-Type", "application/json")
+
+			response, err = app.Test(req)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		When("highlight question with success", func() {
+			var expectedUpdateQuestionResult entities.Room
+
+			BeforeEach(func() {
+				highlightQuestionRequestSerialized, err := ioutil.ReadFile("../../../../../test/resources/highlight_question_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				roomWithQuestionHighlightedSerialized, err := ioutil.ReadFile("../../../../../test/resources/room_with_question_highlighted.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(roomWithQuestionHighlightedSerialized, &expectedUpdateQuestionResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				var questionData dtos.UpdateQuestionDTO
+				err = json.Unmarshal(highlightQuestionRequestSerialized, &questionData)
+				Expect(err).NotTo(HaveOccurred())
+
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				questionID = "621f5f94e07fdbb81c8221f9"
+				userID := "621f5e02e07fdbb81c8221f5"
+
+				input = bytes.NewBuffer(highlightQuestionRequestSerialized)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
+				mockAuthenticator.EXPECT().ExtractUserID(gomock.Any()).Return(userID, nil).Times(1)
+
+				mockRoomService := mocks.NewMockRoomService(mockCtrl)
+				mockRoomService.EXPECT().UpdateQuestion(userID, roomID, questionID, questionData).Return(expectedUpdateQuestionResult, nil).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
+			})
+
+			It("response status code should be equal to 200 OK", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusOK))
+			})
+
+			It("response body should be equal to roomService.UpdateQuestion result", func() {
+				body, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
+				var room entities.Room
+				err = json.Unmarshal(body, &room)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(room).To(Equal(expectedUpdateQuestionResult))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("mark question as answered with success", func() {
+			var expectedUpdateQuestionResult entities.Room
+
+			BeforeEach(func() {
+				markQuestionAsAnsweredRequestSerialized, err := ioutil.ReadFile("../../../../../test/resources/mark_question_as_answered_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				roomWithQuestionAnsweredSerialized, err := ioutil.ReadFile("../../../../../test/resources/room_with_question_answered.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(roomWithQuestionAnsweredSerialized, &expectedUpdateQuestionResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				var questionData dtos.UpdateQuestionDTO
+				err = json.Unmarshal(markQuestionAsAnsweredRequestSerialized, &questionData)
+				Expect(err).NotTo(HaveOccurred())
+
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				questionID = "621f5f94e07fdbb81c8221f9"
+				userID := "621f5e02e07fdbb81c8221f5"
+
+				input = bytes.NewBuffer(markQuestionAsAnsweredRequestSerialized)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
+				mockAuthenticator.EXPECT().ExtractUserID(gomock.Any()).Return(userID, nil).Times(1)
+
+				mockRoomService := mocks.NewMockRoomService(mockCtrl)
+				mockRoomService.EXPECT().UpdateQuestion(userID, roomID, questionID, questionData).Return(expectedUpdateQuestionResult, nil).Times(1)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
+			})
+
+			It("response status code should be equal to 200 OK", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusOK))
+			})
+
+			It("response body should be equal to roomService.UpdateQuestion result", func() {
+				body, err := ioutil.ReadAll(response.Body)
+				Expect(err).NotTo(HaveOccurred())
+
+				var room entities.Room
+				err = json.Unmarshal(body, &room)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(room).To(Equal(expectedUpdateQuestionResult))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("validation fails while updating question", func() {
+			BeforeEach(func() {
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				questionID = "621f5f94e07fdbb81c8221f9"
+				userID := "621f5e02e07fdbb81c8221f5"
+
+				input = bytes.NewBuffer([]byte(`{}`))
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
+				mockAuthenticator.EXPECT().ExtractUserID(gomock.Any()).Return(userID, nil).Times(1)
+
+				mockRoomService := mocks.NewMockRoomService(mockCtrl)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
+			})
+
+			It("response status code should be equal to 422 Unprocessable Entity", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusUnprocessableEntity))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("request body comes with an invalid payload", func() {
+			BeforeEach(func() {
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				questionID = "621f5f94e07fdbb81c8221f9"
+				userID := "621f5e02e07fdbb81c8221f5"
+
+				input = bytes.NewBuffer(nil)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
+				mockAuthenticator.EXPECT().ExtractUserID(gomock.Any()).Return(userID, nil).Times(1)
+
+				mockRoomService := mocks.NewMockRoomService(mockCtrl)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
+			})
+
+			It("response status code should be equal to 400 Bad Request", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusBadRequest))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("an error occurs while extracting user ID", func() {
+			BeforeEach(func() {
+				markQuestionAsAnsweredRequestSerialized, err := ioutil.ReadFile("../../../../../test/resources/mark_question_as_answered_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				questionID = "621f5f94e07fdbb81c8221f9"
+
+				input = bytes.NewBuffer(markQuestionAsAnsweredRequestSerialized)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
+				mockAuthenticator.EXPECT().ExtractUserID(gomock.Any()).Return("", errors.New("an error")).Times(1)
+
+				mockRoomService := mocks.NewMockRoomService(mockCtrl)
+
+				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
+
+				roomController = controllers.NewRoomController(mockRoomService, mockAuthenticator, validationProvider)
+			})
+
+			It("response status code should be equal to 400 Bad Request", func() {
+				Expect(response.StatusCode).To(Equal(fiber.StatusBadRequest))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("a general error occurs while updating question", func() {
+			BeforeEach(func() {
+				highlightQuestionRequestSerialized, err := ioutil.ReadFile("../../../../../test/resources/highlight_question_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				var questionData dtos.UpdateQuestionDTO
+				err = json.Unmarshal(highlightQuestionRequestSerialized, &questionData)
+				Expect(err).NotTo(HaveOccurred())
+
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				questionID = "621f5f94e07fdbb81c8221f9"
+				userID := "621f5e02e07fdbb81c8221f5"
+
+				input = bytes.NewBuffer(highlightQuestionRequestSerialized)
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
+				mockAuthenticator.EXPECT().ExtractUserID(gomock.Any()).Return(userID, nil).Times(1)
+
+				mockRoomService := mocks.NewMockRoomService(mockCtrl)
+				mockRoomService.EXPECT().UpdateQuestion(userID, roomID, questionID, questionData).Return(entities.Room{}, errors.New("an error")).Times(1)
 
 				validationProvider := goplayground.NewGoPlaygroundValidatorProvider()
 
