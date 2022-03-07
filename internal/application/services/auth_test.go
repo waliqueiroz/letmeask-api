@@ -31,8 +31,8 @@ var _ = Describe("Auth", func() {
 		})
 
 		When("the function flow is executed with success", func() {
-			var expectedToken string
-			var expectedUser entities.User
+			var expectedCreateTokenResult string
+			var expectedFindByEmailResult entities.User
 
 			BeforeEach(func() {
 				credentialsSerialized, err := ioutil.ReadFile("../../../test/resources/credentials.json")
@@ -44,31 +44,31 @@ var _ = Describe("Auth", func() {
 				err = json.Unmarshal(credentialsSerialized, &credentials)
 				Expect(err).NotTo(HaveOccurred())
 
-				err = json.Unmarshal(expectedUserSerialized, &expectedUser)
+				err = json.Unmarshal(expectedUserSerialized, &expectedFindByEmailResult)
 				Expect(err).NotTo(HaveOccurred())
 
-				expectedToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJleHAiOjE2MzUxODIyMTYsInVzZXJJRCI6IjYxNjQxYjA5NmJlYjg1YWRiMGU1ZDI5NyJ9.AiB8xDBV5-kNwFwZuf_gLv239IVqfPKYMXiMff_OzDU"
+				expectedCreateTokenResult = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRob3JpemVkIjp0cnVlLCJleHAiOjE2MzUxODIyMTYsInVzZXJJRCI6IjYxNjQxYjA5NmJlYjg1YWRiMGU1ZDI5NyJ9.AiB8xDBV5-kNwFwZuf_gLv239IVqfPKYMXiMff_OzDU"
 
 				mockCtrl = gomock.NewController(GinkgoT())
 
 				mockUserRepository := repositoriesMocks.NewMockUserRepository(mockCtrl)
-				mockUserRepository.EXPECT().FindByEmail(credentials.Email).Return(expectedUser, nil).Times(1)
+				mockUserRepository.EXPECT().FindByEmail(credentials.Email).Return(expectedFindByEmailResult, nil).Times(1)
 
 				mockSecurityProvider := securityMocks.NewMockSecurityProvider(mockCtrl)
-				mockSecurityProvider.EXPECT().Verify(expectedUser.Password, credentials.Password).Return(nil).Times(1)
+				mockSecurityProvider.EXPECT().Verify(expectedFindByEmailResult.Password, credentials.Password).Return(nil).Times(1)
 
 				mockAuthenticator := authMocks.NewMockAuthenticator(mockCtrl)
-				mockAuthenticator.EXPECT().CreateToken(expectedUser.ID, gomock.Any()).Return(expectedToken, nil).Times(1)
+				mockAuthenticator.EXPECT().CreateToken(expectedFindByEmailResult.ID, gomock.Any()).Return(expectedCreateTokenResult, nil).Times(1)
 
 				authService = services.NewAuthService(mockUserRepository, mockSecurityProvider, mockAuthenticator)
 			})
 
 			It("result user should be equal to expected user", func() {
-				Expect(result.User).To(Equal(expectedUser))
+				Expect(result.User).To(Equal(expectedFindByEmailResult))
 			})
 
 			It("result access token should be equal to expected token", func() {
-				Expect(result.AccessToken).To(Equal(expectedToken))
+				Expect(result.AccessToken).To(Equal(expectedCreateTokenResult))
 			})
 
 			It("result token type should be equal to Bearer", func() {
