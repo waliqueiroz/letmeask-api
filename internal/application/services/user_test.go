@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/waliqueiroz/letmeask-api/internal/application/dtos"
+	application "github.com/waliqueiroz/letmeask-api/internal/application/errors"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
 	repositoriesMocks "github.com/waliqueiroz/letmeask-api/internal/infrastructure/database/mongodb/repositories/mocks"
@@ -393,6 +394,182 @@ var _ = Describe("User", func() {
 
 			It("error should be the error returned by the userRepository.Delete function", func() {
 				Expect(deleteError).To(Equal(errors.New("an error")))
+			})
+		})
+	})
+
+	Describe("Executing the UpdatePassword function", func() {
+		var userID string
+		var passwordDTO dtos.PasswordDTO
+		var updatePasswordError error
+		var userService services.UserService
+		var mockCtrl *gomock.Controller
+
+		JustBeforeEach(func() {
+			updatePasswordError = userService.UpdatePassword(userID, passwordDTO)
+		})
+
+		When("the UpdatePassword function is executed with success", func() {
+			BeforeEach(func() {
+				updatePasswordRequestSerialized, err := ioutil.ReadFile("../../../test/resources/update_password_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				fullUserSerialized, err := ioutil.ReadFile("../../../test/resources/full_user.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(updatePasswordRequestSerialized, &passwordDTO)
+				Expect(err).NotTo(HaveOccurred())
+
+				var expectedFindByIDResult entities.User
+				err = json.Unmarshal(fullUserSerialized, &expectedFindByIDResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				userID = "6117e377b6e7bae09f52c483"
+				hashedPassword := "$2a$10$Chs8KofcRGJxJpjMl.ZS8.bJgD8iDBfyLav/oahSGVaTwBmIUUMMm"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockSecurityProvider := securityMocks.NewMockSecurityProvider(mockCtrl)
+				mockSecurityProvider.EXPECT().Verify(expectedFindByIDResult.Password, passwordDTO.Current).Return(nil).Times(1)
+				mockSecurityProvider.EXPECT().Hash(passwordDTO.New).Return(hashedPassword, nil).Times(1)
+
+				mockUserRepository := repositoriesMocks.NewMockUserRepository(mockCtrl)
+				mockUserRepository.EXPECT().FindByID(userID).Return(expectedFindByIDResult, nil).Times(1)
+				mockUserRepository.EXPECT().UpdatePassword(userID, hashedPassword).Return(nil).Times(1)
+
+				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
+			})
+
+			It("error should be nil", func() {
+				Expect(updatePasswordError).Should(BeNil())
+			})
+		})
+
+		When("an error occurs while finding user by ID", func() {
+			BeforeEach(func() {
+				updatePasswordRequestSerialized, err := ioutil.ReadFile("../../../test/resources/update_password_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(updatePasswordRequestSerialized, &passwordDTO)
+				Expect(err).NotTo(HaveOccurred())
+
+				userID = "6117e377b6e7bae09f52c483"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockSecurityProvider := securityMocks.NewMockSecurityProvider(mockCtrl)
+
+				mockUserRepository := repositoriesMocks.NewMockUserRepository(mockCtrl)
+				mockUserRepository.EXPECT().FindByID(userID).Return(entities.User{}, errors.New("an error")).Times(1)
+
+				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
+			})
+
+			It("error should be the error returned by the userRepository.FindByID function", func() {
+				Expect(updatePasswordError).To(Equal(errors.New("an error")))
+			})
+		})
+
+		When("an error occurs while verifying password", func() {
+			BeforeEach(func() {
+				updatePasswordRequestSerialized, err := ioutil.ReadFile("../../../test/resources/update_password_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				fullUserSerialized, err := ioutil.ReadFile("../../../test/resources/full_user.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(updatePasswordRequestSerialized, &passwordDTO)
+				Expect(err).NotTo(HaveOccurred())
+
+				var expectedFindByIDResult entities.User
+				err = json.Unmarshal(fullUserSerialized, &expectedFindByIDResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				userID = "6117e377b6e7bae09f52c483"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockSecurityProvider := securityMocks.NewMockSecurityProvider(mockCtrl)
+				mockSecurityProvider.EXPECT().Verify(expectedFindByIDResult.Password, passwordDTO.Current).Return(errors.New("an error")).Times(1)
+
+				mockUserRepository := repositoriesMocks.NewMockUserRepository(mockCtrl)
+				mockUserRepository.EXPECT().FindByID(userID).Return(expectedFindByIDResult, nil).Times(1)
+
+				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
+			})
+
+			It("error should be an unauthorized error", func() {
+				Expect(updatePasswordError).To(Equal(application.NewUnauthorizedError("a operação falhou, revise os dados e tente novamente")))
+			})
+		})
+
+		When("an error occurs while hashing password", func() {
+			BeforeEach(func() {
+				updatePasswordRequestSerialized, err := ioutil.ReadFile("../../../test/resources/update_password_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				fullUserSerialized, err := ioutil.ReadFile("../../../test/resources/full_user.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(updatePasswordRequestSerialized, &passwordDTO)
+				Expect(err).NotTo(HaveOccurred())
+
+				var expectedFindByIDResult entities.User
+				err = json.Unmarshal(fullUserSerialized, &expectedFindByIDResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				userID = "6117e377b6e7bae09f52c483"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockSecurityProvider := securityMocks.NewMockSecurityProvider(mockCtrl)
+				mockSecurityProvider.EXPECT().Verify(expectedFindByIDResult.Password, passwordDTO.Current).Return(nil).Times(1)
+				mockSecurityProvider.EXPECT().Hash(passwordDTO.New).Return("", errors.New("an error")).Times(1)
+
+				mockUserRepository := repositoriesMocks.NewMockUserRepository(mockCtrl)
+				mockUserRepository.EXPECT().FindByID(userID).Return(expectedFindByIDResult, nil).Times(1)
+
+				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
+			})
+
+			It("error should be the error returned by the securityProvider.Hash function", func() {
+				Expect(updatePasswordError).To(Equal(errors.New("an error")))
+			})
+		})
+
+		When("an error occurs while updating password in database", func() {
+			BeforeEach(func() {
+				updatePasswordRequestSerialized, err := ioutil.ReadFile("../../../test/resources/update_password_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				fullUserSerialized, err := ioutil.ReadFile("../../../test/resources/full_user.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(updatePasswordRequestSerialized, &passwordDTO)
+				Expect(err).NotTo(HaveOccurred())
+
+				var expectedFindByIDResult entities.User
+				err = json.Unmarshal(fullUserSerialized, &expectedFindByIDResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				userID = "6117e377b6e7bae09f52c483"
+				hashedPassword := "$2a$10$Chs8KofcRGJxJpjMl.ZS8.bJgD8iDBfyLav/oahSGVaTwBmIUUMMm"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockSecurityProvider := securityMocks.NewMockSecurityProvider(mockCtrl)
+				mockSecurityProvider.EXPECT().Verify(expectedFindByIDResult.Password, passwordDTO.Current).Return(nil).Times(1)
+				mockSecurityProvider.EXPECT().Hash(passwordDTO.New).Return(hashedPassword, nil).Times(1)
+
+				mockUserRepository := repositoriesMocks.NewMockUserRepository(mockCtrl)
+				mockUserRepository.EXPECT().FindByID(userID).Return(expectedFindByIDResult, nil).Times(1)
+				mockUserRepository.EXPECT().UpdatePassword(userID, hashedPassword).Return(errors.New("an error")).Times(1)
+
+				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
+			})
+
+			It("error should be the error returned by the userRepository.UpdatePassword function", func() {
+				Expect(updatePasswordError).To(Equal(errors.New("an error")))
 			})
 		})
 	})
