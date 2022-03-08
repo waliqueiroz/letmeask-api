@@ -342,9 +342,59 @@ var _ = Describe("User", func() {
 				Expect(result).To(Equal(entities.User{}))
 			})
 
-			It("error be the error returned by the userRepository.Update function", func() {
+			It("error should be the error returned by the userRepository.Update function", func() {
 				Expect(updateError).To(Equal(errors.New("an error")))
 			})
 		})
 	})
+
+	Describe("Executing the Delete function", func() {
+		var userID string
+		var deleteError error
+		var userService services.UserService
+		var mockCtrl *gomock.Controller
+
+		JustBeforeEach(func() {
+			deleteError = userService.Delete(userID)
+		})
+
+		When("the Delete function is executed with success", func() {
+			BeforeEach(func() {
+				userID = "6117e377b6e7bae09f52c483"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserRepository := repositoriesMocks.NewMockUserRepository(mockCtrl)
+				mockUserRepository.EXPECT().Delete(userID).Return(nil).Times(1)
+
+				mockSecurityProvider := securityMocks.NewMockSecurityProvider(mockCtrl)
+
+				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
+			})
+
+			It("error should be nil", func() {
+				Expect(deleteError).Should(BeNil())
+			})
+		})
+
+		When("an error occurs while executing the Delete function", func() {
+			BeforeEach(func() {
+				userID = "6117e377b6e7bae09f52c483"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserRepository := repositoriesMocks.NewMockUserRepository(mockCtrl)
+				mockUserRepository.EXPECT().Delete(userID).Return(errors.New("an error")).Times(1)
+
+				mockSecurityProvider := securityMocks.NewMockSecurityProvider(mockCtrl)
+
+				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
+			})
+
+			It("error should be the error returned by the userRepository.Delete function", func() {
+				Expect(deleteError).To(Equal(errors.New("an error")))
+			})
+		})
+	})
+
 })
