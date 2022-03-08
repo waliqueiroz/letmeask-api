@@ -67,7 +67,7 @@ var _ = Describe("User", func() {
 				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
 			})
 
-			It("result should be an empty array", func() {
+			It("result should be an empty array of users", func() {
 				Expect(result).To(Equal([]entities.User{}))
 			})
 
@@ -120,7 +120,7 @@ var _ = Describe("User", func() {
 				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
 			})
 
-			It("result should be equal to expected Create result", func() {
+			It("result should be equal to expected userRepository.Create result", func() {
 				Expect(result).To(Equal(expectedCreateResult))
 			})
 
@@ -190,4 +190,69 @@ var _ = Describe("User", func() {
 		})
 	})
 
+	Describe("Executing the FindAll function", func() {
+		var userID string
+		var result entities.User
+		var findByIDError error
+		var userService services.UserService
+		var mockCtrl *gomock.Controller
+
+		JustBeforeEach(func() {
+			result, findByIDError = userService.FindByID(userID)
+		})
+
+		When("the FindByID function is executed with success", func() {
+			var expectedFindByIDResult entities.User
+
+			BeforeEach(func() {
+				expectedUserSerialized, err := ioutil.ReadFile("../../../test/resources/full_user.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(expectedUserSerialized, &expectedFindByIDResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				userID = "6117e377b6e7bae09f52c483"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserRepository := repositoriesMocks.NewMockUserRepository(mockCtrl)
+				mockUserRepository.EXPECT().FindByID(userID).Return(expectedFindByIDResult, nil).Times(1)
+
+				mockSecurityProvider := securityMocks.NewMockSecurityProvider(mockCtrl)
+
+				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
+			})
+
+			It("result should be equal to expected userRepository.FindByID result", func() {
+				Expect(result).To(Equal(expectedFindByIDResult))
+			})
+
+			It("error should be nil", func() {
+				Expect(findByIDError).Should(BeNil())
+			})
+		})
+
+		When("an error occurs while executing the FindByID function", func() {
+			BeforeEach(func() {
+				userID = "6117e377b6e7bae09f52c483"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockUserRepository := repositoriesMocks.NewMockUserRepository(mockCtrl)
+				mockUserRepository.EXPECT().FindByID(userID).Return(entities.User{}, errors.New("an error")).Times(1)
+
+				mockSecurityProvider := securityMocks.NewMockSecurityProvider(mockCtrl)
+
+				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
+			})
+
+			It("result should be an empty User struct", func() {
+				Expect(result).To(Equal(entities.User{}))
+			})
+
+			It("error should be the error returned by the userRepository.FindByID function", func() {
+				Expect(findByIDError).To(Equal(errors.New("an error")))
+			})
+		})
+	})
 })
