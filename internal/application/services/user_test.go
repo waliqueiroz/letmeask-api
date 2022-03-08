@@ -77,4 +77,117 @@ var _ = Describe("User", func() {
 		})
 	})
 
+	Describe("Executing the Create function", func() {
+		var user entities.User
+		var result entities.User
+		var createError error
+		var userService services.UserService
+		var mockCtrl *gomock.Controller
+
+		JustBeforeEach(func() {
+			result, createError = userService.Create(user)
+		})
+
+		When("the Create function is executed with success", func() {
+			var expectedCreateResult entities.User
+
+			BeforeEach(func() {
+				createUserRequestSerialized, err := ioutil.ReadFile("../../../test/resources/create_user_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				fullUserSerialized, err := ioutil.ReadFile("../../../test/resources/full_user.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(createUserRequestSerialized, &user)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(fullUserSerialized, &expectedCreateResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				hashedPassword := "$2a$10$Chs8KofcRGJxJpjMl.ZS8.bJgD8iDBfyLav/oahSGVaTwBmIUUMMm"
+
+				userWithHashedPassword := user
+				userWithHashedPassword.Password = hashedPassword
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockSecurityProvider := securityMocks.NewMockSecurityProvider(mockCtrl)
+				mockSecurityProvider.EXPECT().Hash(user.Password).Return(hashedPassword, nil).Times(1)
+
+				mockUserRepository := repositoriesMocks.NewMockUserRepository(mockCtrl)
+				mockUserRepository.EXPECT().Create(userWithHashedPassword).Return(expectedCreateResult, nil).Times(1)
+
+				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
+			})
+
+			It("result should be equal to expected Create result", func() {
+				Expect(result).To(Equal(expectedCreateResult))
+			})
+
+			It("error should be nil", func() {
+				Expect(createError).Should(BeNil())
+			})
+		})
+
+		When("an error occurs while generating password hash", func() {
+			BeforeEach(func() {
+				createUserRequestSerialized, err := ioutil.ReadFile("../../../test/resources/create_user_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(createUserRequestSerialized, &user)
+				Expect(err).NotTo(HaveOccurred())
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockSecurityProvider := securityMocks.NewMockSecurityProvider(mockCtrl)
+				mockSecurityProvider.EXPECT().Hash(user.Password).Return("", errors.New("an error")).Times(1)
+
+				mockUserRepository := repositoriesMocks.NewMockUserRepository(mockCtrl)
+
+				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
+			})
+
+			It("result should be an empty User struct", func() {
+				Expect(result).To(Equal(entities.User{}))
+			})
+
+			It("error should be the error returned by the Hash function", func() {
+				Expect(createError).To(Equal(errors.New("an error")))
+			})
+		})
+
+		When("an error occurs while saving user in database", func() {
+			BeforeEach(func() {
+				createUserRequestSerialized, err := ioutil.ReadFile("../../../test/resources/create_user_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(createUserRequestSerialized, &user)
+				Expect(err).NotTo(HaveOccurred())
+
+				hashedPassword := "$2a$10$Chs8KofcRGJxJpjMl.ZS8.bJgD8iDBfyLav/oahSGVaTwBmIUUMMm"
+
+				userWithHashedPassword := user
+				userWithHashedPassword.Password = hashedPassword
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockSecurityProvider := securityMocks.NewMockSecurityProvider(mockCtrl)
+				mockSecurityProvider.EXPECT().Hash(user.Password).Return(hashedPassword, nil).Times(1)
+
+				mockUserRepository := repositoriesMocks.NewMockUserRepository(mockCtrl)
+				mockUserRepository.EXPECT().Create(userWithHashedPassword).Return(entities.User{}, errors.New("an error")).Times(1)
+
+				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
+			})
+
+			It("result should be an empty User struct", func() {
+				Expect(result).To(Equal(entities.User{}))
+			})
+
+			It("error should be the error returned by the userRepository.Create function", func() {
+				Expect(createError).To(Equal(errors.New("an error")))
+			})
+		})
+	})
+
 })

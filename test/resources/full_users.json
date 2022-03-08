@@ -2,8 +2,8 @@
     {
         "id": "6117e377b6e7bae09f52c483",
         "name": "Teste 1",
-        "avatar": "https://lh3.jpeg",
-        "email": "user@mail.com",
+        "avatar": "https://img.jpeg",
+        "email": "teste1@mail.com",
         "password": "$2a$10$Chs8KofcRGJxJpjMl.ZS8.bJgD8iDBfyLav/oahSGVaTwBmIUUMMm",
         "created_at": "2021-08-14T15:38:31.214Z",
         "updated_at": "2021-08-14T15:40:16.824Z"
