@@ -8,6 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/waliqueiroz/letmeask-api/internal/application/dtos"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
 	repositoriesMocks "github.com/waliqueiroz/letmeask-api/internal/infrastructure/database/mongodb/repositories/mocks"
@@ -252,6 +253,97 @@ var _ = Describe("User", func() {
 
 			It("error should be the error returned by the userRepository.FindByID function", func() {
 				Expect(findByIDError).To(Equal(errors.New("an error")))
+			})
+		})
+	})
+
+	Describe("Executing the Update function", func() {
+		var userID string
+		var userDTO dtos.UserDTO
+		var result entities.User
+		var updateError error
+		var userService services.UserService
+		var mockCtrl *gomock.Controller
+
+		JustBeforeEach(func() {
+			result, updateError = userService.Update(userID, userDTO)
+		})
+
+		When("the Update function is executed with success", func() {
+			var expectedUpdateResult entities.User
+
+			BeforeEach(func() {
+				updateUserRequestSerialized, err := ioutil.ReadFile("../../../test/resources/update_user_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				fullUserSerialized, err := ioutil.ReadFile("../../../test/resources/full_user.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(updateUserRequestSerialized, &userDTO)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(fullUserSerialized, &expectedUpdateResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				userID = "6117e377b6e7bae09f52c483"
+
+				user := entities.User{
+					Name:   userDTO.Name,
+					Email:  userDTO.Email,
+					Avatar: userDTO.Avatar,
+				}
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockSecurityProvider := securityMocks.NewMockSecurityProvider(mockCtrl)
+
+				mockUserRepository := repositoriesMocks.NewMockUserRepository(mockCtrl)
+				mockUserRepository.EXPECT().Update(userID, user).Return(expectedUpdateResult, nil).Times(1)
+
+				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
+			})
+
+			It("result should be equal to expected userRepository.Update result", func() {
+				Expect(result).To(Equal(expectedUpdateResult))
+			})
+
+			It("error should be nil", func() {
+				Expect(updateError).Should(BeNil())
+			})
+		})
+
+		When("an error occurs while executing the Update function", func() {
+			BeforeEach(func() {
+				updateUserRequestSerialized, err := ioutil.ReadFile("../../../test/resources/update_user_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(updateUserRequestSerialized, &userDTO)
+				Expect(err).NotTo(HaveOccurred())
+
+				userID = "6117e377b6e7bae09f52c483"
+
+				user := entities.User{
+					Name:   userDTO.Name,
+					Email:  userDTO.Email,
+					Avatar: userDTO.Avatar,
+				}
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockSecurityProvider := securityMocks.NewMockSecurityProvider(mockCtrl)
+
+				mockUserRepository := repositoriesMocks.NewMockUserRepository(mockCtrl)
+				mockUserRepository.EXPECT().Update(userID, user).Return(entities.User{}, errors.New("an error")).Times(1)
+
+				userService = services.NewUserService(mockUserRepository, mockSecurityProvider)
+			})
+
+			It("result should be an empty User struct", func() {
+				Expect(result).To(Equal(entities.User{}))
+			})
+
+			It("error be the error returned by the userRepository.Update function", func() {
+				Expect(updateError).To(Equal(errors.New("an error")))
 			})
 		})
 	})
