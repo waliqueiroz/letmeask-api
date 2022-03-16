@@ -129,6 +129,10 @@ var _ = Describe("User", func() {
 			It("error should be nil", func() {
 				Expect(createError).Should(BeNil())
 			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
 		})
 
 		When("an error occurs while generating password hash", func() {
@@ -155,6 +159,10 @@ var _ = Describe("User", func() {
 
 			It("error should be the error returned by the Hash function", func() {
 				Expect(createError).To(Equal(errors.New("an error")))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
 			})
 		})
 
@@ -188,6 +196,10 @@ var _ = Describe("User", func() {
 
 			It("error should be the error returned by the userRepository.Create function", func() {
 				Expect(createError).To(Equal(errors.New("an error")))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
 			})
 		})
 	})
@@ -232,6 +244,10 @@ var _ = Describe("User", func() {
 			It("error should be nil", func() {
 				Expect(findByIDError).Should(BeNil())
 			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
 		})
 
 		When("an error occurs while executing the FindByID function", func() {
@@ -254,6 +270,10 @@ var _ = Describe("User", func() {
 
 			It("error should be the error returned by the userRepository.FindByID function", func() {
 				Expect(findByIDError).To(Equal(errors.New("an error")))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
 			})
 		})
 	})
@@ -311,6 +331,10 @@ var _ = Describe("User", func() {
 			It("error should be nil", func() {
 				Expect(updateError).Should(BeNil())
 			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
 		})
 
 		When("an error occurs while executing the Update function", func() {
@@ -345,6 +369,10 @@ var _ = Describe("User", func() {
 
 			It("error should be the error returned by the userRepository.Update function", func() {
 				Expect(updateError).To(Equal(errors.New("an error")))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
 			})
 		})
 	})
@@ -395,6 +423,10 @@ var _ = Describe("User", func() {
 			It("error should be the error returned by the userRepository.Delete function", func() {
 				Expect(deleteError).To(Equal(errors.New("an error")))
 			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
 		})
 	})
 
@@ -443,6 +475,10 @@ var _ = Describe("User", func() {
 			It("error should be nil", func() {
 				Expect(updatePasswordError).Should(BeNil())
 			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
 		})
 
 		When("an error occurs while finding user by ID", func() {
@@ -467,6 +503,10 @@ var _ = Describe("User", func() {
 
 			It("error should be the error returned by the userRepository.FindByID function", func() {
 				Expect(updatePasswordError).To(Equal(errors.New("an error")))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
 			})
 		})
 
@@ -501,6 +541,10 @@ var _ = Describe("User", func() {
 			It("error should be an unauthorized error", func() {
 				Expect(updatePasswordError).To(Equal(application.NewUnauthorizedError("a operação falhou, revise os dados e tente novamente")))
 			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
 		})
 
 		When("an error occurs while hashing password", func() {
@@ -534,6 +578,10 @@ var _ = Describe("User", func() {
 
 			It("error should be the error returned by the securityProvider.Hash function", func() {
 				Expect(updatePasswordError).To(Equal(errors.New("an error")))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
 			})
 		})
 
@@ -570,6 +618,10 @@ var _ = Describe("User", func() {
 
 			It("error should be the error returned by the userRepository.UpdatePassword function", func() {
 				Expect(updatePasswordError).To(Equal(errors.New("an error")))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
 			})
 		})
 	})
