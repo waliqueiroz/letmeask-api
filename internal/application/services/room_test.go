@@ -94,4 +94,71 @@ var _ = Describe("Room", func() {
 		})
 
 	})
+
+	Describe("Executing the FindByID function", func() {
+		var roomID string
+		var result entities.Room
+		var findByIDError error
+		var roomService services.RoomService
+		var mockCtrl *gomock.Controller
+
+		JustBeforeEach(func() {
+			result, findByIDError = roomService.FindByID(roomID)
+		})
+
+		When("the FindByID function is executed with success", func() {
+			var expectedFindByIDResult entities.Room
+
+			BeforeEach(func() {
+				roomSerialized, err := ioutil.ReadFile("../../../test/resources/room.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(roomSerialized, &expectedFindByIDResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				roomID = "61769231c3e60c7dd40baf8f"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockRoomRepository := repositoriesMocks.NewMockRoomRepository(mockCtrl)
+				mockRoomRepository.EXPECT().FindByID(roomID).Return(expectedFindByIDResult, nil).Times(1)
+
+				roomService = services.NewRoomService(mockRoomRepository)
+			})
+
+			It("result should be equal to expected roomRepository.FindByID result", func() {
+				Expect(result).To(Equal(expectedFindByIDResult))
+			})
+
+			It("error should be nil", func() {
+				Expect(findByIDError).Should(BeNil())
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("an error occurs while saving room in database", func() {
+			BeforeEach(func() {
+				roomID = "61769231c3e60c7dd40baf8f"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockRoomRepository := repositoriesMocks.NewMockRoomRepository(mockCtrl)
+				mockRoomRepository.EXPECT().FindByID(roomID).Return(entities.Room{}, errors.New("an error")).Times(1)
+
+				roomService = services.NewRoomService(mockRoomRepository)
+			})
+
+			It("error should be the error returned by the roomRepository.FindByID function", func() {
+				Expect(findByIDError).To(Equal(errors.New("an error")))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+	})
 })
