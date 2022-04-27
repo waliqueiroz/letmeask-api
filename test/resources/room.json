@@ -1,10 +1,10 @@
 {
-    "id": "61769231c3e60c7dd40baf8f",
-    "title": "Sala Teste",
+    "id": "621f5ec1e07fdbb81c8221f7",
+    "title": "Dúvidas sobre Symbian",
     "author": {
-        "id": "61641b096beb85adb0e5d297",
-        "name": "João",
-        "avatar": "https://teste.com/test.jpg"
+        "id": "621f5e02e07fdbb81c8221f5",
+        "name": "Teste 1",
+        "avatar": "https://teste.com/avatar.jpg"
     },
     "created_at": "2021-10-25T11:17:05.755Z",
     "updated_at": "2021-10-25T11:17:05.755Z"
