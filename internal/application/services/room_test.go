@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	application "github.com/waliqueiroz/letmeask-api/internal/application/errors"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
 	repositoriesMocks "github.com/waliqueiroz/letmeask-api/internal/infrastructure/database/mongodb/repositories/mocks"
@@ -139,7 +140,7 @@ var _ = Describe("Room", func() {
 			})
 		})
 
-		When("an error occurs while saving room in database", func() {
+		When("an error occurs while finding room by ID", func() {
 			BeforeEach(func() {
 				roomID = "61769231c3e60c7dd40baf8f"
 
@@ -151,8 +152,160 @@ var _ = Describe("Room", func() {
 				roomService = services.NewRoomService(mockRoomRepository)
 			})
 
+			It("result should be an empty room struct", func() {
+				Expect(result).To(Equal(entities.Room{}))
+			})
+
 			It("error should be the error returned by the roomRepository.FindByID function", func() {
 				Expect(findByIDError).To(Equal(errors.New("an error")))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+	})
+
+	Describe("Executing the EndRoom function", func() {
+		var roomID string
+		var userID string
+		var result entities.Room
+		var endRoomError error
+		var roomService services.RoomService
+		var mockCtrl *gomock.Controller
+
+		JustBeforeEach(func() {
+			result, endRoomError = roomService.EndRoom(userID, roomID)
+		})
+
+		When("the EndRoom function is executed with success", func() {
+			var expectedEndRoomResult entities.Room
+
+			BeforeEach(func() {
+				roomWithQuestionsSerialized, err := ioutil.ReadFile("../../../test/resources/room_with_questions.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				endedRoomSerialized, err := ioutil.ReadFile("../../../test/resources/ended_room.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				var expectedFindByIDResult entities.Room
+				err = json.Unmarshal(roomWithQuestionsSerialized, &expectedFindByIDResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(endedRoomSerialized, &expectedEndRoomResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				userID = "621f5e02e07fdbb81c8221f5"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockRoomRepository := repositoriesMocks.NewMockRoomRepository(mockCtrl)
+				mockRoomRepository.EXPECT().FindByID(roomID).Return(expectedFindByIDResult, nil).Times(1)
+				mockRoomRepository.EXPECT().Update(roomID, gomock.AssignableToTypeOf(entities.Room{})).Return(expectedEndRoomResult, nil).Times(1)
+
+				roomService = services.NewRoomService(mockRoomRepository)
+			})
+
+			It("result should be equal to expected roomRepository.Update result", func() {
+				Expect(result).To(Equal(expectedEndRoomResult))
+			})
+
+			It("error should be nil", func() {
+				Expect(endRoomError).Should(BeNil())
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("an error occurs while finding room by ID", func() {
+			BeforeEach(func() {
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				userID = "621f5e02e07fdbb81c8221f5"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockRoomRepository := repositoriesMocks.NewMockRoomRepository(mockCtrl)
+				mockRoomRepository.EXPECT().FindByID(roomID).Return(entities.Room{}, errors.New("an error")).Times(1)
+
+				roomService = services.NewRoomService(mockRoomRepository)
+			})
+
+			It("result should be an empty room struct", func() {
+				Expect(result).To(Equal(entities.Room{}))
+			})
+
+			It("error should be the error returned by the roomRepository.FindByID function", func() {
+				Expect(endRoomError).To(Equal(errors.New("an error")))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("the userID is not equal to the room author ID", func() {
+			BeforeEach(func() {
+				roomWithQuestionsSerialized, err := ioutil.ReadFile("../../../test/resources/room_with_questions.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				var expectedFindByIDResult entities.Room
+				err = json.Unmarshal(roomWithQuestionsSerialized, &expectedFindByIDResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				userID = "621f5e02e07fdbb81c8221l5"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockRoomRepository := repositoriesMocks.NewMockRoomRepository(mockCtrl)
+				mockRoomRepository.EXPECT().FindByID(roomID).Return(expectedFindByIDResult, nil).Times(1)
+
+				roomService = services.NewRoomService(mockRoomRepository)
+			})
+
+			It("result should be an empty room struct", func() {
+				Expect(result).To(Equal(entities.Room{}))
+			})
+
+			It("error should be a forbidden error", func() {
+				Expect(endRoomError).To(Equal(application.NewForbiddenError("você não pode encerrar uma sala que não é sua.")))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("an error occurs while updating room in database", func() {
+			BeforeEach(func() {
+				roomWithQuestionsSerialized, err := ioutil.ReadFile("../../../test/resources/room_with_questions.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				var expectedFindByIDResult entities.Room
+				err = json.Unmarshal(roomWithQuestionsSerialized, &expectedFindByIDResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				userID = "621f5e02e07fdbb81c8221f5"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockRoomRepository := repositoriesMocks.NewMockRoomRepository(mockCtrl)
+				mockRoomRepository.EXPECT().FindByID(roomID).Return(expectedFindByIDResult, nil).Times(1)
+				mockRoomRepository.EXPECT().Update(roomID, gomock.AssignableToTypeOf(entities.Room{})).Return(entities.Room{}, errors.New("an error")).Times(1)
+
+				roomService = services.NewRoomService(mockRoomRepository)
+			})
+
+			It("result should be an empty room struct", func() {
+				Expect(result).To(Equal(entities.Room{}))
+			})
+
+			It("error should be the error returned by the roomRepository.Update function", func() {
+				Expect(endRoomError).To(Equal(errors.New("an error")))
 			})
 
 			AfterEach(func() {
