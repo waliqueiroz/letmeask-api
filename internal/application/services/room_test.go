@@ -13,6 +13,7 @@ import (
 	application "github.com/waliqueiroz/letmeask-api/internal/application/errors"
 	"github.com/waliqueiroz/letmeask-api/internal/application/services"
 	"github.com/waliqueiroz/letmeask-api/internal/domain/entities"
+	domain "github.com/waliqueiroz/letmeask-api/internal/domain/errors"
 	repositoriesMocks "github.com/waliqueiroz/letmeask-api/internal/infrastructure/database/mongodb/repositories/mocks"
 )
 
@@ -679,6 +680,179 @@ var _ = Describe("Room", func() {
 
 			It("error should be the error returned by the roomRepository.Update function", func() {
 				Expect(updateQuestionError).To(Equal(errors.New("an error")))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+	})
+
+	Describe("Executing the LikeQuestion function", func() {
+		var roomID string
+		var questionID string
+		var like entities.Like
+		var result entities.Room
+		var likeQuestionError error
+		var roomService services.RoomService
+		var mockCtrl *gomock.Controller
+
+		JustBeforeEach(func() {
+			result, likeQuestionError = roomService.LikeQuestion(roomID, questionID, like)
+		})
+
+		When("the LikeQuestion function is executed with success", func() {
+			var expectedUpdateQuestionResult entities.Room
+
+			BeforeEach(func() {
+				likeQuestionRequestSerialized, err := ioutil.ReadFile("../../../test/resources/like_question_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				roomWithQuestionsSerialized, err := ioutil.ReadFile("../../../test/resources/room_with_questions.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				roomWithQuestionLikedSerialized, err := ioutil.ReadFile("../../../test/resources/room_with_question_liked.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				var expectedFindByIDResult entities.Room
+				err = json.Unmarshal(roomWithQuestionsSerialized, &expectedFindByIDResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(roomWithQuestionLikedSerialized, &expectedUpdateQuestionResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(likeQuestionRequestSerialized, &like)
+				Expect(err).NotTo(HaveOccurred())
+
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				questionID = "621f5f94e07fdbb81c8221f9"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockRoomRepository := repositoriesMocks.NewMockRoomRepository(mockCtrl)
+				mockRoomRepository.EXPECT().FindByID(roomID).Return(expectedFindByIDResult, nil).Times(1)
+				mockRoomRepository.EXPECT().Update(roomID, gomock.AssignableToTypeOf(entities.Room{})).Return(expectedUpdateQuestionResult, nil).Times(1)
+
+				roomService = services.NewRoomService(mockRoomRepository)
+			})
+
+			It("result should be equal to expected roomRepository.Update result", func() {
+				Expect(result).To(Equal(expectedUpdateQuestionResult))
+			})
+
+			It("error should be nil", func() {
+				Expect(likeQuestionError).Should(BeNil())
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("an error occurs while finding room by ID", func() {
+			BeforeEach(func() {
+				likeQuestionRequestSerialized, err := ioutil.ReadFile("../../../test/resources/like_question_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(likeQuestionRequestSerialized, &like)
+				Expect(err).NotTo(HaveOccurred())
+
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				questionID = "621f5f94e07fdbb81c8221f9"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockRoomRepository := repositoriesMocks.NewMockRoomRepository(mockCtrl)
+				mockRoomRepository.EXPECT().FindByID(roomID).Return(entities.Room{}, errors.New("an error")).Times(1)
+
+				roomService = services.NewRoomService(mockRoomRepository)
+			})
+
+			It("result should be an empty room struct", func() {
+				Expect(result).To(Equal(entities.Room{}))
+			})
+
+			It("error should be the error returned by the roomRepository.FindByID function", func() {
+				Expect(likeQuestionError).To(Equal(errors.New("an error")))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("question ID does not exists", func() {
+			BeforeEach(func() {
+				likeQuestionRequestSerialized, err := ioutil.ReadFile("../../../test/resources/like_question_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				roomWithQuestionsSerialized, err := ioutil.ReadFile("../../../test/resources/room_with_questions.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				var expectedFindByIDResult entities.Room
+				err = json.Unmarshal(roomWithQuestionsSerialized, &expectedFindByIDResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(likeQuestionRequestSerialized, &like)
+				Expect(err).NotTo(HaveOccurred())
+
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				questionID = "621f5f94e07fdbb81c82213f9"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockRoomRepository := repositoriesMocks.NewMockRoomRepository(mockCtrl)
+				mockRoomRepository.EXPECT().FindByID(roomID).Return(expectedFindByIDResult, nil).Times(1)
+
+				roomService = services.NewRoomService(mockRoomRepository)
+			})
+
+			It("result should be an empty room struct", func() {
+				Expect(result).To(Equal(entities.Room{}))
+			})
+
+			It("error should a ResourceNotFoundError", func() {
+				Expect(likeQuestionError).To(Equal(domain.NewResourceNotFoundError("pergunta não encontrada.")))
+			})
+
+			AfterEach(func() {
+				mockCtrl.Finish()
+			})
+		})
+
+		When("an error occurs while updating room in database", func() {
+			BeforeEach(func() {
+				likeQuestionRequestSerialized, err := ioutil.ReadFile("../../../test/resources/like_question_request.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				roomWithQuestionsSerialized, err := ioutil.ReadFile("../../../test/resources/room_with_questions.json")
+				Expect(err).NotTo(HaveOccurred())
+
+				var expectedFindByIDResult entities.Room
+				err = json.Unmarshal(roomWithQuestionsSerialized, &expectedFindByIDResult)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = json.Unmarshal(likeQuestionRequestSerialized, &like)
+				Expect(err).NotTo(HaveOccurred())
+
+				roomID = "621f5ec1e07fdbb81c8221f7"
+				questionID = "621f5f94e07fdbb81c8221f9"
+
+				mockCtrl = gomock.NewController(GinkgoT())
+
+				mockRoomRepository := repositoriesMocks.NewMockRoomRepository(mockCtrl)
+				mockRoomRepository.EXPECT().FindByID(roomID).Return(expectedFindByIDResult, nil).Times(1)
+				mockRoomRepository.EXPECT().Update(roomID, gomock.AssignableToTypeOf(entities.Room{})).Return(entities.Room{}, errors.New("an error")).Times(1)
+
+				roomService = services.NewRoomService(mockRoomRepository)
+			})
+
+			It("result should be an empty room struct", func() {
+				Expect(result).To(Equal(entities.Room{}))
+			})
+
+			It("error should be the error returned by the roomRepository.Update function", func() {
+				Expect(likeQuestionError).To(Equal(errors.New("an error")))
 			})
 
 			AfterEach(func() {
